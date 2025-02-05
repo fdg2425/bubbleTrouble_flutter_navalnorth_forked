@@ -48,23 +48,72 @@ class _HomePageState extends State<HomePage> {
   }
 
    void startGame() {
-    Timer.periodic(const Duration(milliseconds: 50), (timer) {
+    double time = 0;
+    double height = 0;
+    double velocity = 60; 
+
+    Timer.periodic(const Duration(milliseconds: 5), (timer) {
+      //Equation pour que la alle rebondissent
+      height = -5 * time * time + velocity * time;
+
+      //si la balle touche le sol reset le saut
+      if (height < 0) {
+        time = 0;
+      }
+
+      // met a jour la position de la balle
+      setState(() {
+        ballY = heighToCoordinate(height);
+      });
+
+
+
+      //si la balle touche les cotés ca change de direction a droite
       if (ballX - 0.02 < -1) {
         ballDirection = Direction.right;
+        
+      //si la balle touche les cotés ca change de direction a gauche
       } else if (ballX + 0.02 > 1) {
         ballDirection = Direction.left;
       }
 
+      // Bouge la bale dans lea direction approprié
       if (ballDirection == Direction.left) {
         setState(() {
-        ballX -= 0.03;
+        ballX -= 0.005;
       });
       } else if (ballDirection == Direction.right) {
         setState(() {
-          ballX += 0.03;
+          ballX += 0.005;
         });
       }
+
+      //check si la balle touche le joueur
+      if (playerDies()) {
+        timer.cancel();
+        _showDialog();
+      }
+
+      // Le temps s'incremente
+      time += 0.1;
     });
+  }
+
+  void _showDialog() {
+    showDialog(
+      context: context, 
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[800],
+          title: Center(
+            child: Text(
+              "T'as été touché chef !",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        );
+      }
+    );
   }
 
   void moveLeft() {
@@ -100,19 +149,42 @@ class _HomePageState extends State<HomePage> {
           missileHeight += 10.clamp(-1.0, 1.0);
         });
 
+        //arreter missiles quand ca arrive au top
         if (missileHeight > MediaQuery.of(context).size.height * 3 / 4) {
-          //arreter missiles
           resetMissile();
           timer.cancel();
-          midshoot = false;
+        }
+
+        //checker si le missile touche la balle
+        if (ballY > heighToCoordinate(missileHeight) && (ballX - missileX).abs() < 0.03) {
+          resetMissile();
+          ballX = 5;
+          timer.cancel();
         }
     });
     }
   }
 
+  //Convertis la hauteur en coodonnées
+  double heighToCoordinate(double height) {
+    double totalHeight = MediaQuery.of(context).size.height * 3 /4;
+    double position = 1 - 2 * (height / totalHeight);
+    return position;
+  }
+
   void resetMissile() {
     missileHeight = playerX;
     missileHeight = 0;
+    midshoot = false;
+  }
+
+  bool playerDies() {
+    //si la balle touche le joueur et si la position du joueur et de la balle sont la meme
+    if ((ballX - playerX).abs() < 0.05 && ballY > 0.95) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @override
