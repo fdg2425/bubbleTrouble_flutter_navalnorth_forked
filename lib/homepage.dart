@@ -14,7 +14,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-enum Direction { left, right}
+enum Direction { left, right }
 
 class _HomePageState extends State<HomePage> {
   //variables joueur
@@ -31,8 +31,6 @@ class _HomePageState extends State<HomePage> {
   double ballY = 0;
   var ballDirection = Direction.left;
 
-  
-
   @override
   void initState() {
     super.initState();
@@ -47,10 +45,10 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-   void startGame() {
+  void startGame() {
     double time = 0;
     double height = 0;
-    double velocity = 60; 
+    double velocity = 60;
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
       //Equation pour que la alle rebondissent
@@ -66,13 +64,11 @@ class _HomePageState extends State<HomePage> {
         ballY = heighToCoordinate(height);
       });
 
-
-
       //si la balle touche les cotés ca change de direction a droite
       if (ballX - 0.02 < -1) {
         ballDirection = Direction.right;
-        
-      //si la balle touche les cotés ca change de direction a gauche
+
+        //si la balle touche les cotés ca change de direction a gauche
       } else if (ballX + 0.02 > 1) {
         ballDirection = Direction.left;
       }
@@ -80,8 +76,8 @@ class _HomePageState extends State<HomePage> {
       // Bouge la bale dans lea direction approprié
       if (ballDirection == Direction.left) {
         setState(() {
-        ballX -= 0.005;
-      });
+          ballX -= 0.005;
+        });
       } else if (ballDirection == Direction.right) {
         setState(() {
           ballX += 0.005;
@@ -101,19 +97,18 @@ class _HomePageState extends State<HomePage> {
 
   void _showDialog() {
     showDialog(
-      context: context, 
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey[800],
-          title: Center(
-            child: Text(
-              "T'as été touché chef !",
-              style: TextStyle(color: Colors.white),
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Colors.grey[800],
+            title: const Center(
+              child: Text(
+                "T'as été touché chef !",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
-          ),
-        );
-      }
-    );
+          );
+        });
   }
 
   void moveLeft() {
@@ -156,18 +151,19 @@ class _HomePageState extends State<HomePage> {
         }
 
         //checker si le missile touche la balle
-        if (ballY > heighToCoordinate(missileHeight) && (ballX - missileX).abs() < 0.03) {
+        if (ballY > heighToCoordinate(missileHeight) &&
+            (ballX - missileX).abs() < 0.03) {
           resetMissile();
           ballX = 5;
           timer.cancel();
         }
-    });
+      });
     }
   }
 
   //Convertis la hauteur en coodonnées
   double heighToCoordinate(double height) {
-    double totalHeight = MediaQuery.of(context).size.height * 3 /4;
+    double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
     double position = 1 - 2 * (height / totalHeight);
     return position;
   }
@@ -215,52 +211,26 @@ class _HomePageState extends State<HomePage> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    MyBall(
-                      ballX: ballX, 
-                      ballY: ballY
-                    ),
-
-                    MyMissile(
-                      height: missileHeight, 
-                      missileX: missileX
-                    ),
-
+                    MyBall(ballX: ballX, ballY: ballY),
+                    MyMissile(height: missileHeight, missileX: missileX),
                     Align(
                       alignment: Alignment(playerX, 1),
-                      child: MyPlayer(
-                        playerX: playerX
-                      ),
+                      child: MyPlayer(playerX: playerX),
                     ),
                   ],
                 ),
               ),
             ),
-            
             Expanded(
               child: Container(
                 color: Colors.grey,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    MyButton(
-                      icon: Icons.play_arrow, 
-                      function: startGame
-                    ),
-
-                    MyButton(
-                      icon: Icons.arrow_back, 
-                      function: moveLeft
-                    ),
-
-                    MyButton(
-                      icon: Icons.arrow_upward, 
-                      function: fireMissile
-                    ),
-
-                    MyButton(
-                      icon: Icons.arrow_forward, 
-                      function: moveRight
-                    ),
+                    MyButton(icon: Icons.play_arrow, function: startGame),
+                    MyButton(icon: Icons.arrow_back, function: moveLeft),
+                    MyButton(icon: Icons.arrow_upward, function: fireMissile),
+                    MyButton(icon: Icons.arrow_forward, function: moveRight),
                   ],
                 ),
               ),
