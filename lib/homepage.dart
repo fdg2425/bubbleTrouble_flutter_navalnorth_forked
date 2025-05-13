@@ -223,7 +223,8 @@ class _HomePageState extends State<HomePage> {
               moveRight();
             }
 
-            if (event.logicalKey == LogicalKeyboardKey.space) {
+            if (event.logicalKey == LogicalKeyboardKey.space ||
+                event.logicalKey == LogicalKeyboardKey.arrowUp) {
               fireMissile();
             }
           }
