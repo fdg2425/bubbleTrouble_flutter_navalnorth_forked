@@ -20,6 +20,7 @@ class _HomePageState extends State<HomePage> {
   //variables joueur
   static double playerX = 0;
   final FocusNode _focusNode = FocusNode();
+  bool gameIsRunning = false;
 
   //variables missiles
   double missileX = playerX;
@@ -49,6 +50,16 @@ class _HomePageState extends State<HomePage> {
     double time = 0;
     double height = 0;
     double velocity = 60;
+
+    print("in startGame, gameIsRunning = $gameIsRunning");
+
+    if (gameIsRunning) {
+      return;
+    }
+
+    setState(() {
+      gameIsRunning = true;
+    });
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
       //Equation pour que la alle rebondissent
@@ -87,6 +98,7 @@ class _HomePageState extends State<HomePage> {
       //check si la balle touche le joueur
       if (playerDies()) {
         timer.cancel();
+        gameIsRunning = false;
         _showDialog();
       }
 
@@ -134,6 +146,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void fireMissile() {
+    print("playerX: $playerX, missileX: $missileX");
     if (midshoot == false) {
       Timer.periodic(const Duration(microseconds: 1000), (timer) {
         //missile tiré
@@ -227,7 +240,10 @@ class _HomePageState extends State<HomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    MyButton(icon: Icons.play_arrow, function: startGame),
+                    Opacity(
+                        opacity: gameIsRunning ? 0.2 : 1,
+                        child: MyButton(
+                            icon: Icons.play_arrow, function: startGame)),
                     MyButton(icon: Icons.arrow_back, function: moveLeft),
                     MyButton(icon: Icons.arrow_upward, function: fireMissile),
                     MyButton(icon: Icons.arrow_forward, function: moveRight),
