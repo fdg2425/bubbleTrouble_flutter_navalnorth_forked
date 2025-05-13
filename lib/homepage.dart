@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -156,7 +158,10 @@ class _HomePageState extends State<HomePage> {
 
         // Misile jusqu'au top de l'ecran
         setState(() {
-          missileHeight += 10.clamp(-1.0, 1.0);
+          // I did not understand the clamp in next line.
+          // For me "10.clamp(-1.0, 1.0)" is the same as 1.
+          //missileHeight += 10.clamp(-1.0, 1.0);
+          missileHeight += 3; // increased missile speed
         });
 
         //arreter missiles quand ca arrive au top
@@ -191,7 +196,7 @@ class _HomePageState extends State<HomePage> {
 
   bool playerDies() {
     //si la balle touche le joueur et si la position du joueur et de la balle sont la meme
-    if ((ballX - playerX).abs() < 0.05 && ballY > 0.95) {
+    if ((ballX - playerX).abs() < 0.1 && ballY > 0.95) {
       return true;
     } else {
       return false;
