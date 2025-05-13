@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   static double playerX = 0;
   final FocusNode _focusNode = FocusNode();
   bool gameIsRunning = false;
+  int score = 0;
 
   //variables missiles
   double missileX = playerX;
@@ -61,6 +62,7 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       gameIsRunning = true;
+      score = 0;
       ballX = 1;
       ballY = 1;
     });
@@ -174,8 +176,12 @@ class _HomePageState extends State<HomePage> {
         if (ballY > heighToCoordinate(missileHeight) &&
             (ballX - missileX).abs() < 0.03) {
           resetMissile();
-          ballX = 2; // let him start a bit outside
           timer.cancel();
+          setState(() {
+            score++;
+            // let the ball start a bit outside
+            ballX = 2;
+          });
         }
       });
     }
@@ -231,6 +237,13 @@ class _HomePageState extends State<HomePage> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
+                    Container(
+                        alignment: const Alignment(0.95, -0.95),
+                        child: Text("Your score: $score",
+                            style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 22))),
                     MyBall(ballX: ballX, ballY: ballY),
                     MyMissile(height: missileHeight, missileX: missileX),
                     Align(
