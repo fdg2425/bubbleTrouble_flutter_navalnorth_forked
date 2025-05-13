@@ -28,8 +28,8 @@ class _HomePageState extends State<HomePage> {
   bool midshoot = false;
 
   //balle variables
-  double ballX = 0.5;
-  double ballY = 0;
+  double ballX = 1;
+  double ballY = 1;
   var ballDirection = Direction.left;
 
   @override
@@ -59,6 +59,8 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       gameIsRunning = true;
+      ballX = 1;
+      ballY = 1;
     });
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
@@ -167,7 +169,7 @@ class _HomePageState extends State<HomePage> {
         if (ballY > heighToCoordinate(missileHeight) &&
             (ballX - missileX).abs() < 0.03) {
           resetMissile();
-          ballX = 5;
+          ballX = 2; // let him start a bit outside
           timer.cancel();
         }
       });
