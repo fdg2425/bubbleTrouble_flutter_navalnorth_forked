@@ -9,7 +9,9 @@ import 'package:saute_mouton/button.dart';
 import 'package:saute_mouton/missile.dart';
 import 'package:saute_mouton/player.dart';
 import 'auto_repeater.dart';
+import 'ball_widget.dart';
 import 'score_display.dart';
+import 'utilities.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,8 +20,6 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-enum Direction { left, right }
-
 class _HomePageState extends State<HomePage> {
   //variables joueur
   static double playerX = 0;
@@ -27,17 +27,14 @@ class _HomePageState extends State<HomePage> {
   bool gameIsRunning = false;
   int score = 0;
 
+  Ball ball = Ball();
+
   //variables missiles
   double missileX = playerX;
   double missileHeight = 10;
   bool midshoot = false;
   late AutoRepeater leftMoveRepeater;
   late AutoRepeater rightMoveRepeater;
-
-  //balle variables
-  double ballX = 1;
-  double ballY = 1;
-  var ballDirection = Direction.left;
 
   @override
   void initState() {
@@ -56,10 +53,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void startGame() {
-    double time = 0;
-    double height = 0;
-    double velocity = 60;
-
     print("in startGame, gameIsRunning = $gameIsRunning");
 
     if (gameIsRunning) {
@@ -69,56 +62,23 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       gameIsRunning = true;
       score = 0;
-      ballX = 1;
-      ballY = 1;
+      ball.goToStartPosition();
       // reset player and missile to the center
       playerX = 0;
       missileX = 0;
     });
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
-      //Equation pour que la alle rebondissent
-      height = -5 * time * time + velocity * time;
-
-      //si la balle touche le sol reset le saut
-      if (height < 0) {
-        time = 0;
-      }
-
-      // met a jour la position de la balle
+      double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
       setState(() {
-        ballY = heighToCoordinate(height);
+        ball.move(totalHeight);
       });
-
-      //si la balle touche les cotés ca change de direction a droite
-      if (ballX - 0.02 < -1) {
-        ballDirection = Direction.right;
-
-        //si la balle touche les cotés ca change de direction a gauche
-      } else if (ballX + 0.02 > 1) {
-        ballDirection = Direction.left;
-      }
-
-      // Bouge la bale dans lea direction approprié
-      if (ballDirection == Direction.left) {
-        setState(() {
-          ballX -= 0.005;
-        });
-      } else if (ballDirection == Direction.right) {
-        setState(() {
-          ballX += 0.005;
-        });
-      }
-
       //check si la balle touche le joueur
       if (playerDies()) {
         timer.cancel();
         gameIsRunning = false;
         _showDialog();
       }
-
-      // Le temps s'incremente
-      time += 0.1;
     });
   }
 
@@ -182,25 +142,19 @@ class _HomePageState extends State<HomePage> {
         }
 
         //checker si le missile touche la balle
-        if (ballY > heighToCoordinate(missileHeight) &&
-            (ballX - missileX).abs() < 0.03) {
+        double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
+        if (ball.alignY > heighToCoordinate(missileHeight, totalHeight) &&
+            (ball.alignX - missileX).abs() < 0.03) {
           resetMissile();
           timer.cancel();
           setState(() {
             score++;
             // let the ball start a bit outside
-            ballX = 2;
+            ball.alignX = 2;
           });
         }
       });
     }
-  }
-
-  //Convertis la hauteur en coodonnées
-  double heighToCoordinate(double height) {
-    double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
-    double position = 1 - 2 * (height / totalHeight);
-    return position;
   }
 
   void resetMissile() {
@@ -211,7 +165,7 @@ class _HomePageState extends State<HomePage> {
 
   bool playerDies() {
     //si la balle touche le joueur et si la position du joueur et de la balle sont la meme
-    if ((ballX - playerX).abs() < 0.1 && ballY > 0.95) {
+    if ((ball.alignX - playerX).abs() < 0.1 && ball.alignY > 0.95) {
       return true;
     } else {
       return false;
@@ -262,7 +216,7 @@ class _HomePageState extends State<HomePage> {
                   alignment: Alignment.center,
                   children: [
                     ScoreDisplay(score: score),
-                    MyBall(ballX: ballX, ballY: ballY),
+                    BallWidget(ball: ball),
                     MyMissile(height: missileHeight, missileX: missileX),
                     Align(
                       alignment: Alignment(playerX, 1),
