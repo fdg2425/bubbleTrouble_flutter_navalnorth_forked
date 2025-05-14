@@ -8,6 +8,7 @@ import 'package:saute_mouton/ball.dart';
 import 'package:saute_mouton/button.dart';
 import 'package:saute_mouton/missile.dart';
 import 'package:saute_mouton/player.dart';
+import 'auto_repeater.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -29,6 +30,8 @@ class _HomePageState extends State<HomePage> {
   double missileX = playerX;
   double missileHeight = 10;
   bool midshoot = false;
+  late AutoRepeater leftMoveRepeater;
+  late AutoRepeater rightMoveRepeater;
 
   //balle variables
   double ballX = 1;
@@ -40,6 +43,8 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
+      leftMoveRepeater = AutoRepeater(moveLeft);
+      rightMoveRepeater = AutoRepeater(moveRight);
     });
   }
 
@@ -65,6 +70,7 @@ class _HomePageState extends State<HomePage> {
       score = 0;
       ballX = 1;
       ballY = 1;
+      playerX = 0;
     });
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
@@ -131,7 +137,7 @@ class _HomePageState extends State<HomePage> {
 
   void moveLeft() {
     setState(() {
-      playerX = (playerX - 0.1).clamp(-1.0, 1.0);
+      playerX = (playerX - 0.05).clamp(-1.0, 1.0);
 
       // Il coordine les 2 X quand on n'est pas au milieu d'un tir
       if (!midshoot) {
@@ -142,7 +148,7 @@ class _HomePageState extends State<HomePage> {
 
   void moveRight() {
     setState(() {
-      playerX = (playerX + 0.1).clamp(-1.0, 1.0);
+      playerX = (playerX + 0.05).clamp(-1.0, 1.0);
 
       // Il coordine les 2 X quand on n'est pas au milieu d'un tir
       if (!midshoot) {
@@ -216,16 +222,24 @@ class _HomePageState extends State<HomePage> {
         focusNode: _focusNode,
         autofocus: true,
         onKeyEvent: (event) {
+          print("key event is $event");
           if (event is KeyDownEvent) {
             if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-              moveLeft();
+              leftMoveRepeater.start();
             } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-              moveRight();
+              rightMoveRepeater.start();
             }
 
             if (event.logicalKey == LogicalKeyboardKey.space ||
                 event.logicalKey == LogicalKeyboardKey.arrowUp) {
               fireMissile();
+            }
+          }
+          if (event is KeyUpEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+              leftMoveRepeater.stop();
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+              rightMoveRepeater.stop();
             }
           }
         },
