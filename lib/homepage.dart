@@ -41,10 +41,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    leftMoveRepeater = AutoRepeater(moveLeft);
+    rightMoveRepeater = AutoRepeater(moveRight);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
-      leftMoveRepeater = AutoRepeater(moveLeft);
-      rightMoveRepeater = AutoRepeater(moveRight);
     });
   }
 
@@ -279,9 +279,13 @@ class _HomePageState extends State<HomePage> {
                         opacity: gameIsRunning ? 0.2 : 1,
                         child: MyButton(
                             icon: Icons.play_arrow, function: startGame)),
-                    MyButton(icon: Icons.arrow_back, function: moveLeft),
+                    MyButton(
+                        icon: Icons.arrow_back, repeater: leftMoveRepeater),
                     MyButton(icon: Icons.arrow_upward, function: fireMissile),
-                    MyButton(icon: Icons.arrow_forward, function: moveRight),
+                    MyButton(
+                      icon: Icons.arrow_forward,
+                      repeater: rightMoveRepeater,
+                    ),
                   ],
                 ),
               ),
