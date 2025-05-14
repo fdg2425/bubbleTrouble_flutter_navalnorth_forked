@@ -71,7 +71,9 @@ class _HomePageState extends State<HomePage> {
       score = 0;
       ballX = 1;
       ballY = 1;
+      // reset player and missile to the center
       playerX = 0;
+      missileX = 0;
     });
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
