@@ -9,6 +9,7 @@ import 'package:saute_mouton/button.dart';
 import 'package:saute_mouton/missile.dart';
 import 'package:saute_mouton/player.dart';
 import 'auto_repeater.dart';
+import 'score_display.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -218,6 +219,12 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Bubble trouble", style: TextStyle(fontSize: 28)),
+        backgroundColor: Colors.grey,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
       body: KeyboardListener(
         focusNode: _focusNode,
         autofocus: true,
@@ -252,13 +259,7 @@ class _HomePageState extends State<HomePage> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Container(
-                        alignment: const Alignment(0.95, -0.95),
-                        child: Text("Your score: $score",
-                            style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 22))),
+                    ScoreDisplay(score: score),
                     MyBall(ballX: ballX, ballY: ballY),
                     MyMissile(height: missileHeight, missileX: missileX),
                     Align(
