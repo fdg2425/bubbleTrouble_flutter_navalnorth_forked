@@ -26,8 +26,9 @@ class _HomePageState extends State<HomePage> {
   final FocusNode _focusNode = FocusNode();
   bool gameIsRunning = false;
   int score = 0;
-
-  Ball ball = Ball();
+  List<Ball> balls = [];
+  // time to add an additional ball (initialized to be "far away")
+  DateTime? dtAddBall;
 
   //variables missiles
   double missileX = playerX;
@@ -62,22 +63,40 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       gameIsRunning = true;
       score = 0;
+      balls.clear();
+      var ball = Ball();
       ball.goToStartPosition();
+      balls.add(ball);
       // reset player and missile to the center
       playerX = 0;
       missileX = 0;
     });
 
+    dtAddBall = DateTime.now().add(const Duration(seconds: 10));
+
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
       double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
       setState(() {
-        ball.move(totalHeight);
+        for (var ball in balls) {
+          ball.move(totalHeight);
+        }
       });
       //check si la balle touche le joueur
       if (playerDies()) {
         timer.cancel();
         gameIsRunning = false;
         _showDialog();
+      }
+
+      if (dtAddBall != null && DateTime.now().isAfter(dtAddBall!)) {
+        balls.add(Ball());
+        // the better the score, the smaller is the time when an additional ball is added,
+        // but give him at least 2 seconds
+        int delay = 10 - score ~/ 10;
+        if (delay < 2) {
+          delay = 2;
+        }
+        dtAddBall = DateTime.now().add(Duration(seconds: delay));
       }
     });
   }
@@ -143,15 +162,22 @@ class _HomePageState extends State<HomePage> {
 
         //checker si le missile touche la balle
         double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
-        if (ball.alignY > heighToCoordinate(missileHeight, totalHeight) &&
-            (ball.alignX - missileX).abs() < 0.03) {
-          resetMissile();
-          timer.cancel();
-          setState(() {
-            score++;
-            // let the ball start a bit outside
-            ball.alignX = 2;
-          });
+        for (var ball in balls) {
+          if (ball.alignY > heighToCoordinate(missileHeight, totalHeight) &&
+              (ball.alignX - missileX).abs() < 0.03) {
+            resetMissile();
+            timer.cancel();
+            setState(() {
+              score++;
+              balls.remove(ball);
+            });
+          }
+        }
+        if (balls.isEmpty) {
+          var ball = Ball();
+          // let the new ball start a bit outside
+          ball.alignX = 2;
+          balls.add(ball);
         }
       });
     }
@@ -165,15 +191,22 @@ class _HomePageState extends State<HomePage> {
 
   bool playerDies() {
     //si la balle touche le joueur et si la position du joueur et de la balle sont la meme
-    if ((ball.alignX - playerX).abs() < 0.1 && ball.alignY > 0.95) {
-      return true;
-    } else {
-      return false;
+    for (var ball in balls) {
+      if ((ball.alignX - playerX).abs() < 0.1 && ball.alignY > 0.95) {
+        return true;
+      }
     }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
+    double? secondsTillAdditionalBall;
+    if (dtAddBall != null) {
+      secondsTillAdditionalBall =
+          (dtAddBall!.difference(DateTime.now()).inMilliseconds / 1000);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Bubble trouble", style: TextStyle(fontSize: 28)),
@@ -216,7 +249,7 @@ class _HomePageState extends State<HomePage> {
                   alignment: Alignment.center,
                   children: [
                     ScoreDisplay(score: score),
-                    BallWidget(ball: ball),
+                    for (var ball in balls) BallWidget(ball: ball),
                     MyMissile(height: missileHeight, missileX: missileX),
                     Align(
                       alignment: Alignment(playerX, 1),
@@ -243,6 +276,11 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.arrow_forward,
                       repeater: rightMoveRepeater,
                     ),
+                    if (secondsTillAdditionalBall != null)
+                      Container(
+                          alignment: const Alignment(0.95, 0.95),
+                          child: Text(
+                              "additional ball in ${secondsTillAdditionalBall.toStringAsFixed(1)} s"))
                   ],
                 ),
               ),
