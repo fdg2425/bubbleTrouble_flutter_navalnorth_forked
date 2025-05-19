@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
         }
       });
       //check si la balle touche le joueur
-      if (playerDies()) {
+      if (playerDies(totalHeight, totalWidth)) {
         timer.cancel();
         gameIsRunning = false;
         _showDialog();
@@ -199,10 +199,17 @@ class _HomePageState extends State<HomePage> {
     midshoot = false;
   }
 
-  bool playerDies() {
+  bool playerDies(double totalHeight, double totalWidth) {
     //si la balle touche le joueur et si la position du joueur et de la balle sont la meme
+    // to avoid fake collisions when the width of Chrome is increased, we have to convert
+    // player's width and height into "alignment units":
+    // playerWidth /(totalWidth - playerWidth) = alignDistanceX / 2  => alignDistanceX = 2 * playerWidth / (totalWidth - playerWidth)
+    // experience showed that it should be smaller, so we use 1.5 instead of 2:
+    double alignDistanceX = 1.5 * playerWidth / (totalWidth - playerWidth);
+    double alignDistanceY = 1.5 * playerHeight / (totalHeight - playerHeight);
     for (var ball in balls) {
-      if ((ball.alignX - playerX).abs() < 0.1 && ball.alignY > 0.95) {
+      if ((ball.alignX - playerX).abs() < alignDistanceX &&
+          ball.alignY > 1 - alignDistanceY) {
         return true;
       }
     }

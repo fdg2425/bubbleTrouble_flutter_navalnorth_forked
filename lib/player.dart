@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+const double playerWidth = 50;
+const double playerHeight = 50;
+
 class MyPlayer extends StatelessWidget {
   final double playerX;
 
@@ -14,8 +17,8 @@ class MyPlayer extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: Container(
           color: Colors.deepPurple,
-          height: 50,
-          width: 50,
+          height: playerHeight,
+          width: playerWidth,
         ),
       ),
     );
