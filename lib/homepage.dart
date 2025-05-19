@@ -161,6 +161,11 @@ class _HomePageState extends State<HomePage> {
         }
 
         //checker si le missile touche la balle
+        // While iterating through a list in Android, you should not remove elements from that list.
+        // Otherwise you get an "ConcurrentModificationError" exception (this does not happen on Chrome ?!).
+        // So memorize the balls to be removed in an extra list and remove them later:
+        List<Ball> ballsToBeRemoved = [];
+
         double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
         for (var ball in balls) {
           if (ball.alignY > heighToCoordinate(missileHeight, totalHeight) &&
@@ -169,10 +174,14 @@ class _HomePageState extends State<HomePage> {
             timer.cancel();
             setState(() {
               score++;
-              balls.remove(ball);
+              ballsToBeRemoved.add(ball);
             });
           }
         }
+        for (var ball in ballsToBeRemoved) {
+          balls.remove(ball);
+        }
+        // if no more ball exists, start a new one
         if (balls.isEmpty) {
           var ball = Ball();
           // let the new ball start a bit outside
