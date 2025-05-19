@@ -76,9 +76,10 @@ class _HomePageState extends State<HomePage> {
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
       double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
+      double totalWidth = MediaQuery.of(context).size.width;
       setState(() {
         for (var ball in balls) {
-          ball.move(totalHeight);
+          ball.move(totalHeight, totalWidth);
         }
       });
       //check si la balle touche le joueur

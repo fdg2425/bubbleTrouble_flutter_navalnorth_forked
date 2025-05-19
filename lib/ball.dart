@@ -15,7 +15,7 @@ class Ball {
     alignY = 1;
   }
 
-  void move(double totalHeight) {
+  void move(double totalHeight, double totalWidth) {
     //Equation pour que la alle rebondissent
     height = -5 * time * time + velocity * time;
 
@@ -37,10 +37,20 @@ class Ball {
     }
 
     // Bouge la bale dans lea direction approprié
+
+    // Independent of the screenwidth in Chrome browser, we want to have the same ball speed in x direction.
+    // This was no the case when adding a fixed value to alignX, because this value moves the ball faster
+    // when the browser window is wider.
+    // Solution: move the ball by a fixed amount of pixels, represented in the formula below by "speedX":
+    // We have:
+    // speedX / totalWidth = deltaAlign / 2   => deltaAlignX = 2 * speedX / totalWidth
+    // let's try speedX = 2:
+    var deltaAlignX = 4 / totalWidth;
+    //print(deltaAlignX);
     if (ballDirection == Direction.left) {
-      alignX -= 0.005;
+      alignX -= deltaAlignX;
     } else if (ballDirection == Direction.right) {
-      alignX += 0.005;
+      alignX += deltaAlignX;
     }
     // Le temps s'incremente
     time += 0.1;
