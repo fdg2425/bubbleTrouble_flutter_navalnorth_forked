@@ -31,6 +31,7 @@ class _HomePageState extends State<HomePage> {
   List<Ball> balls = [];
   // time to add an additional ball (initialized to be "far away")
   DateTime? dtAddBall;
+  DateTime? dtLastMissileTimer;
 
   //variables missiles
   double missileX = playerX;
@@ -78,7 +79,7 @@ class _HomePageState extends State<HomePage> {
     dtAddBall = DateTime.now().add(const Duration(seconds: 10));
 
     Timer.periodic(const Duration(milliseconds: 5), (timer) {
-      double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
+      double totalHeight = getStackHeight(context);
       double totalWidth = MediaQuery.of(context).size.width;
       setState(() {
         for (var ball in balls) {
@@ -161,7 +162,19 @@ class _HomePageState extends State<HomePage> {
     }
     print("playerX: $playerX, missileX: $missileX");
     if (midshoot == false) {
-      Timer.periodic(const Duration(microseconds: 1000), (timer) {
+      Timer.periodic(const Duration(milliseconds: 20), (timer) {
+        // Ensure that the missile "flies" for half a second independent of the screenheight.
+        // When Android emulator was turned by 90°, missile reached the top very fast and it was difficlut to hit a ball.
+
+        double deltaHeight =
+            3; // in the first timer event, move missile for 3 pixels
+        double stackHeight = getStackHeight(context);
+        if (dtLastMissileTimer != null) {
+          deltaHeight = stackHeight *
+              DateTime.now().difference(dtLastMissileTimer!).inMilliseconds /
+              500;
+        }
+        dtLastMissileTimer = DateTime.now();
         //missile tiré
         midshoot = true;
 
@@ -170,11 +183,11 @@ class _HomePageState extends State<HomePage> {
           // I did not understand the clamp in next line.
           // For me "10.clamp(-1.0, 1.0)" is the same as 1.
           //missileHeight += 10.clamp(-1.0, 1.0);
-          missileHeight += 3; // increased missile speed
+          missileHeight += deltaHeight; // increased missile speed
         });
 
         //arreter missiles quand ca arrive au top
-        if (missileHeight > MediaQuery.of(context).size.height * 3 / 4) {
+        if (missileHeight > stackHeight) {
           resetMissile();
           timer.cancel();
         }
@@ -185,9 +198,8 @@ class _HomePageState extends State<HomePage> {
         // So memorize the balls to be removed in an extra list and remove them later:
         List<Ball> ballsToBeRemoved = [];
 
-        double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
         for (var ball in balls) {
-          if (ball.alignY > heighToCoordinate(missileHeight, totalHeight) &&
+          if (ball.alignY > heighToCoordinate(missileHeight, stackHeight) &&
               (ball.alignX - missileX).abs() < 0.03) {
             resetMissile();
             timer.cancel();
@@ -211,10 +223,26 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+// Until now the variable totalHeight was used for the height of the "player area".
+// It was calculated like this:
+//          double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
+// But in this calculation the height of the AppBar (and in Android the height of the StatusBar) was missing.
+// Because "totalHeight" does not express very well what is meant, we use as function name getStackHeight,
+// as the "player area" is the Stack widget:
+  double getStackHeight(BuildContext context) {
+    double result = (MediaQuery.of(context).size.height -
+            kToolbarHeight -
+            MediaQuery.of(context).padding.top) *
+        3 /
+        4;
+    return result;
+  }
+
   void resetMissile() {
     missileHeight = playerX;
     missileHeight = 0;
     midshoot = false;
+    dtLastMissileTimer = null;
   }
 
   bool playerDies(double totalHeight, double totalWidth) {
