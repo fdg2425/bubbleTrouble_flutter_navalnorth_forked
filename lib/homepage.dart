@@ -10,6 +10,7 @@ import 'package:saute_mouton/missile.dart';
 import 'package:saute_mouton/player.dart';
 import 'auto_repeater.dart';
 import 'ball_widget.dart';
+import 'game_over_widget.dart';
 import 'score_display.dart';
 import 'utilities.dart';
 
@@ -25,6 +26,7 @@ class _HomePageState extends State<HomePage> {
   static double playerX = 0;
   final FocusNode _focusNode = FocusNode();
   bool gameIsRunning = false;
+  bool gameHasEnded = false;
   int score = 0;
   List<Ball> balls = [];
   // time to add an additional ball (initialized to be "far away")
@@ -62,6 +64,7 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       gameIsRunning = true;
+      gameHasEnded = false;
       score = 0;
       balls.clear();
       var ball = Ball();
@@ -86,7 +89,10 @@ class _HomePageState extends State<HomePage> {
       if (playerDies(totalHeight, totalWidth)) {
         timer.cancel();
         gameIsRunning = false;
-        _showDialog();
+        //_showDialog();
+        setState(() {
+          gameHasEnded = true;
+        });
       }
 
       if (dtAddBall != null && DateTime.now().isAfter(dtAddBall!)) {
@@ -102,23 +108,29 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _showDialog() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: Colors.grey[800],
-            title: const Center(
-              child: Text(
-                "T'as été touché chef !",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          );
-        });
-  }
+  // Showing an Alert dialog has a disadvantage: it blocks keyboard events and tap events on other widgets
+  // As a consequence: when an AutoRepeater was active when the player get hit, this AutoRepeater did not stop.
+  // Therefore we decided to manage the end of the game in another way (with flag gameHasEnded)
+  // void _showDialog() {
+  //   showDialog(
+  //       context: context,
+  //       builder: (BuildContext context) {
+  //         return AlertDialog(
+  //           backgroundColor: Colors.grey[800],
+  //           title: const Center(
+  //             child: Text(
+  //               "T'as été touché chef !",
+  //               style: TextStyle(color: Colors.white),
+  //             ),
+  //           ),
+  //         );
+  //       });
+  // }
 
   void moveLeft() {
+    if (gameHasEnded) {
+      return;
+    }
     setState(() {
       playerX = (playerX - 0.05).clamp(-1.0, 1.0);
 
@@ -130,6 +142,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void moveRight() {
+    if (gameHasEnded) {
+      return;
+    }
     setState(() {
       playerX = (playerX + 0.05).clamp(-1.0, 1.0);
 
@@ -141,6 +156,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void fireMissile() {
+    if (gameHasEnded) {
+      return;
+    }
     print("playerX: $playerX, missileX: $missileX");
     if (midshoot == false) {
       Timer.periodic(const Duration(microseconds: 1000), (timer) {
@@ -266,12 +284,14 @@ class _HomePageState extends State<HomePage> {
                   alignment: Alignment.center,
                   children: [
                     ScoreDisplay(score: score),
-                    for (var ball in balls) BallWidget(ball: ball),
                     MyMissile(height: missileHeight, missileX: missileX),
                     Align(
                       alignment: Alignment(playerX, 1),
                       child: MyPlayer(playerX: playerX),
                     ),
+                    // show the balls on top of the player to better see the collisions
+                    for (var ball in balls) BallWidget(ball: ball),
+                    if (gameHasEnded) const GameOverWidget(),
                   ],
                 ),
               ),
