@@ -5,7 +5,7 @@ enum Direction { left, right }
 class Ball {
   double time = 0;
   double height = 0;
-  double velocity = 60;
+  double velocity = 220;
   double alignX = 1;
   double alignY = 1;
   var ballDirection = Direction.left;
@@ -17,7 +17,7 @@ class Ball {
 
   void move(double totalHeight, double totalWidth) {
     //Equation pour que la alle rebondissent
-    height = -5 * time * time + velocity * time;
+    height = -70 * time * time + velocity * time;
 
     //si la balle touche le sol reset le saut
     if (height < 0) {
@@ -45,7 +45,7 @@ class Ball {
     // We have:
     // speedX / totalWidth = deltaAlign / 2   => deltaAlignX = 2 * speedX / totalWidth
     // let's try speedX = 2:
-    var deltaAlignX = 4 / totalWidth;
+    var deltaAlignX = 14 / totalWidth;
     //print(deltaAlignX);
     if (ballDirection == Direction.left) {
       alignX -= deltaAlignX;

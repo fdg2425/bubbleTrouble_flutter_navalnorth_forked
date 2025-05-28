@@ -4,10 +4,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:saute_mouton/ball.dart';
-import 'package:saute_mouton/button.dart';
-import 'package:saute_mouton/missile.dart';
-import 'package:saute_mouton/player.dart';
+import 'ball.dart';
+import 'button.dart';
+import 'cycle_counter.dart';
+import 'missile.dart';
+import 'player.dart';
 import 'auto_repeater.dart';
 import 'ball_widget.dart';
 import 'game_over_widget.dart';
@@ -37,8 +38,14 @@ class _HomePageState extends State<HomePage> {
   double missileX = playerX;
   double missileHeight = 10;
   bool midshoot = false;
+
+  // autorepeater
   late AutoRepeater leftMoveRepeater;
   late AutoRepeater rightMoveRepeater;
+
+  // timer and build counter
+  var timerCounter = CycleCounter();
+  var buildCounter = CycleCounter();
 
   @override
   void initState() {
@@ -63,6 +70,9 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
+    timerCounter.reset();
+    buildCounter.reset();
+
     setState(() {
       gameIsRunning = true;
       gameHasEnded = false;
@@ -78,7 +88,11 @@ class _HomePageState extends State<HomePage> {
 
     dtAddBall = DateTime.now().add(const Duration(seconds: 10));
 
-    Timer.periodic(const Duration(milliseconds: 5), (timer) {
+    // By increasing the cycle time to 40ms we try to ensure, that we have a
+    // similar ball speed on different machines and also in Debug and Release.
+    Timer.periodic(const Duration(milliseconds: 40), (timer) {
+      timerCounter.increase();
+
       double totalHeight = getStackHeight(context);
       double totalWidth = MediaQuery.of(context).size.width;
       setState(() {
@@ -264,6 +278,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    buildCounter.increase();
+
     double? secondsTillAdditionalBall;
     if (dtAddBall != null) {
       secondsTillAdditionalBall =
@@ -320,6 +336,13 @@ class _HomePageState extends State<HomePage> {
                     // show the balls on top of the player to better see the collisions
                     for (var ball in balls) BallWidget(ball: ball),
                     if (gameHasEnded) const GameOverWidget(),
+                    Positioned(
+                        top: 0,
+                        left: 0,
+                        child: Text(
+                            "timersPerSecond: ${timerCounter.getCountsPerSecond().toStringAsFixed(1)}   "
+                            "buildsPerSecond: ${buildCounter.getCountsPerSecond().toStringAsFixed(1)} \n"
+                            "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter}")),
                   ],
                 ),
               ),
