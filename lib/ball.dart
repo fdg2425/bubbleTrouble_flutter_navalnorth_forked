@@ -34,7 +34,7 @@ class Ball {
     }
 
     // met a jour la position de la balle
-    alignY = heighToCoordinate(height, totalHeight);
+    alignY = heightToCoordinate(height, totalHeight);
 
     //si la balle touche les cotés ca change de direction a droite
     if (alignX - 0.02 < -1) {

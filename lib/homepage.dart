@@ -213,7 +213,7 @@ class _HomePageState extends State<HomePage> {
         List<Ball> ballsToBeRemoved = [];
 
         for (var ball in balls) {
-          if (ball.alignY > heighToCoordinate(missileHeight, stackHeight) &&
+          if (ball.alignY > heightToCoordinate(missileHeight, stackHeight) &&
               (ball.alignX - missileX).abs() < 0.03) {
             resetMissile();
             timer.cancel();
