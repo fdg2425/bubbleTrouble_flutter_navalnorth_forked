@@ -322,28 +322,42 @@ class _HomePageState extends State<HomePage> {
           children: [
             Expanded(
               flex: 3,
-              child: Container(
-                color: Colors.pink[100],
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    ScoreDisplay(score: score),
-                    MyMissile(height: missileHeight, missileX: missileX),
-                    Align(
-                      alignment: Alignment(playerX, 1),
-                      child: MyPlayer(playerX: playerX),
-                    ),
-                    // show the balls on top of the player to better see the collisions
-                    for (var ball in balls) BallWidget(ball: ball),
-                    if (gameHasEnded) const GameOverWidget(),
-                    Positioned(
-                        top: 0,
-                        left: 0,
-                        child: Text(
-                            "timersPerSecond: ${timerCounter.getCountsPerSecond().toStringAsFixed(1)}   "
-                            "buildsPerSecond: ${buildCounter.getCountsPerSecond().toStringAsFixed(1)} \n"
-                            "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter}")),
-                  ],
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  if (!gameHasEnded) {
+                    setState(() {
+                      playerX += deltaXToCoordinate(
+                          details.delta.dx, MediaQuery.of(context).size.width);
+                      playerX = playerX.clamp(-1, 1);
+                      if (!midshoot) {
+                        missileX = playerX;
+                      }
+                    });
+                  }
+                },
+                child: Container(
+                  color: Colors.pink[100],
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      ScoreDisplay(score: score),
+                      MyMissile(height: missileHeight, missileX: missileX),
+                      Align(
+                        alignment: Alignment(playerX, 1),
+                        child: MyPlayer(playerX: playerX),
+                      ),
+                      // show the balls on top of the player to better see the collisions
+                      for (var ball in balls) BallWidget(ball: ball),
+                      if (gameHasEnded) const GameOverWidget(),
+                      Positioned(
+                          top: 0,
+                          left: 0,
+                          child: Text(
+                              "timersPerSecond: ${timerCounter.getCountsPerSecond().toStringAsFixed(1)}   "
+                              "buildsPerSecond: ${buildCounter.getCountsPerSecond().toStringAsFixed(1)} \n"
+                              "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter}")),
+                    ],
+                  ),
                 ),
               ),
             ),
