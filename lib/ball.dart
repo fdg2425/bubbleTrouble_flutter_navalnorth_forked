@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'utilities.dart';
 
 enum Direction { left, right }
@@ -9,6 +10,14 @@ class Ball {
   double alignX = 1;
   double alignY = 1;
   var ballDirection = Direction.left;
+
+  // randomize the velocity and thus the height of the balls, because otherwise
+  // the player can be easily moved to a fixed position where he is quite "safe",
+  // as all balls follow similar curves.
+  Ball() {
+    var random = Random();
+    velocity = 180 + 60 * random.nextDouble();
+  }
 
   void goToStartPosition() {
     alignX = 1;
