@@ -9,6 +9,7 @@ import 'button.dart';
 import 'cycle_counter.dart';
 import 'missile.dart';
 import 'player.dart';
+import 'player_movement_switch.dart';
 import 'auto_repeater.dart';
 import 'ball_widget.dart';
 import 'score_display.dart';
@@ -28,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   final FocusNode _focusNode = FocusNode();
   bool gameIsRunning = false;
   bool gameHasEnded = false;
+  bool movePlayerWithPanning = true;
   int score = 0;
   List<Ball> balls = [];
   // time to add an additional ball (initialized to be "far away")
@@ -276,6 +278,21 @@ class _HomePageState extends State<HomePage> {
     return false;
   }
 
+  // common callback for pPanUpdate used both for the playing area
+  // and for the "panning area" introduced on bottom right.
+  void onPanUpdate(DragUpdateDetails details) {
+    if (!gameHasEnded) {
+      setState(() {
+        playerX += deltaXToCoordinate(
+            details.delta.dx, MediaQuery.of(context).size.width);
+        playerX = playerX.clamp(-1, 1);
+        if (!midshoot) {
+          missileX = playerX;
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     buildCounter.increase();
@@ -323,18 +340,7 @@ class _HomePageState extends State<HomePage> {
             Expanded(
               flex: 3,
               child: GestureDetector(
-                onPanUpdate: (details) {
-                  if (!gameHasEnded) {
-                    setState(() {
-                      playerX += deltaXToCoordinate(
-                          details.delta.dx, MediaQuery.of(context).size.width);
-                      playerX = playerX.clamp(-1, 1);
-                      if (!midshoot) {
-                        missileX = playerX;
-                      }
-                    });
-                  }
-                },
+                onPanUpdate: onPanUpdate,
                 child: Container(
                   color: Colors.pink[100],
                   child: Stack(
@@ -359,7 +365,8 @@ class _HomePageState extends State<HomePage> {
                           child: Text(
                               "timersPerSecond: ${timerCounter.getCountsPerSecond().toStringAsFixed(1)}   "
                               "buildsPerSecond: ${buildCounter.getCountsPerSecond().toStringAsFixed(1)} \n"
-                              "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter}")),
+                              "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter} \n"
+                              "additional ball in ${secondsTillAdditionalBall != null ? secondsTillAdditionalBall.toStringAsFixed(1) : 0}s")),
                     ],
                   ),
                 ),
@@ -371,22 +378,74 @@ class _HomePageState extends State<HomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Opacity(
-                        opacity: gameIsRunning ? 0.2 : 1,
-                        child: MyButton(
-                            icon: Icons.play_arrow, function: startGame)),
-                    MyButton(
-                        icon: Icons.arrow_back, repeater: leftMoveRepeater),
-                    MyButton(icon: Icons.arrow_upward, function: fireMissile),
-                    MyButton(
-                      icon: Icons.arrow_forward,
-                      repeater: rightMoveRepeater,
+                    if (gameIsRunning)
+                      Expanded(
+                          flex: 1,
+                          child: MyButton(
+                              icon: Icons.arrow_upward, function: fireMissile)),
+                    Expanded(
+                      flex: 3,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (!gameIsRunning)
+                            PlayerMovementSwitch(
+                              usePanning: movePlayerWithPanning,
+                              callback: (value) {
+                                setState(() {
+                                  movePlayerWithPanning = value;
+                                });
+                              },
+                            ),
+                          if (gameIsRunning && !movePlayerWithPanning)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                MyButton(
+                                  icon: Icons.arrow_back,
+                                  repeater: leftMoveRepeater,
+                                ),
+                                const SizedBox(width: 20),
+                                MyButton(
+                                  icon: Icons.arrow_forward,
+                                  repeater: rightMoveRepeater,
+                                ),
+                              ],
+                            ),
+                          if (gameIsRunning && movePlayerWithPanning)
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GestureDetector(
+                                  onPanUpdate: onPanUpdate,
+                                  child: Container(
+                                      alignment: Alignment.center,
+                                      height: double.infinity,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade800,
+                                          border: Border.all(
+                                              color: Colors.white,
+                                              width: 2), // Grey border
+                                          borderRadius: BorderRadius.circular(
+                                              15)), // Rounded corners
+
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Text(
+                                          "pan here or in the playing area to move the player",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      )),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                    if (secondsTillAdditionalBall != null)
-                      Container(
-                          alignment: const Alignment(0.95, 0.95),
-                          child: Text(
-                              "additional ball in ${secondsTillAdditionalBall.toStringAsFixed(1)} s"))
                   ],
                 ),
               ),
