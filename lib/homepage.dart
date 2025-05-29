@@ -11,8 +11,8 @@ import 'missile.dart';
 import 'player.dart';
 import 'auto_repeater.dart';
 import 'ball_widget.dart';
-import 'game_over_widget.dart';
 import 'score_display.dart';
+import 'start_game_widget.dart';
 import 'utilities.dart';
 
 class HomePage extends StatefulWidget {
@@ -348,7 +348,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                       // show the balls on top of the player to better see the collisions
                       for (var ball in balls) BallWidget(ball: ball),
-                      if (gameHasEnded) const GameOverWidget(),
+                      if (!gameIsRunning)
+                        StartGameWidget(
+                            callback: startGame,
+                            displayText:
+                                gameHasEnded ? "Restart game" : "Start game"),
                       Positioned(
                           top: 0,
                           left: 0,
