@@ -9,7 +9,7 @@ import 'button.dart';
 import 'cycle_counter.dart';
 import 'missile.dart';
 import 'player.dart';
-import 'player_movement_switch.dart';
+import 'player_movement_selection.dart';
 import 'auto_repeater.dart';
 import 'ball_widget.dart';
 import 'score_display.dart';
@@ -389,7 +389,7 @@ class _HomePageState extends State<HomePage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           if (!gameIsRunning)
-                            PlayerMovementSwitch(
+                            PlayerMovementSelection(
                               usePanning: movePlayerWithPanning,
                               callback: (value) {
                                 setState(() {
