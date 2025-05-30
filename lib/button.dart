@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'auto_repeater.dart';
 
@@ -23,6 +25,16 @@ class MyButton extends StatelessWidget {
         }
       },
       onTapUp: (details) {
+        print(">>> tapUp");
+        if (repeater != null) {
+          repeater!.stop();
+        }
+      },
+      // Before we did not react on TapCancel. This had the effect that when the user tapped on a button
+      // and then moved his finger outside the button and then moved the finger up, we did not receive the onTapUp.
+      // But we receive a onTapCancel in this case.
+      onTapCancel: () {
+        print(">>> tapCancel");
         if (repeater != null) {
           repeater!.stop();
         }
@@ -33,7 +45,7 @@ class MyButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           child: Container(
             color: Colors.grey[100],
-            width: 100,
+            width: 120,
             // height: 50,
             child: Center(
               child: Icon(icon),
