@@ -178,7 +178,7 @@ class _HomePageState extends State<HomePage> {
     }
     print("playerX: $playerX, missileX: $missileX");
     if (midshoot == false) {
-      Timer.periodic(const Duration(milliseconds: 20), (timer) {
+      Timer.periodic(const Duration(milliseconds: 40), (timer) {
         // Ensure that the missile "flies" for half a second independent of the screenheight.
         // When Android emulator was turned by 90°, missile reached the top very fast and it was difficlut to hit a ball.
 
