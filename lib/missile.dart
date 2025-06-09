@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'player.dart';
+
 class Missile {
   double height = 0;
-  double alignX = 0;
+  double left = 0;
   DateTime? dtLastIncrease; // DateTime of last increase call
 
   void increase(double stackHeight) {
@@ -21,16 +23,19 @@ class Missile {
     dtLastIncrease = DateTime.now();
   }
 
-  Widget getMissileWidget () {
-        return Container(
-      alignment: Alignment(alignX, 1),
+  void alignToPlayer(Player player) {
+    left = player.left + player.width / 2 - 1;
+  }
+
+  Widget getMissileWidget() {
+    return Positioned(
+      left: left,
+      bottom: 0,
       child: Container(
         width: 2,
         height: height,
         color: Colors.grey,
       ),
     );
-
   }
 }
-

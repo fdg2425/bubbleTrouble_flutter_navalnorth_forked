@@ -13,7 +13,6 @@ import 'player_movement_selection.dart';
 import 'auto_repeater.dart';
 import 'score_display.dart';
 import 'start_game_widget.dart';
-import 'utilities.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,11 +25,14 @@ class _HomePageState extends State<HomePage> {
   //variables joueur
   var player = Player();
   Missile? missile;
+  List<Ball> balls = [];
+  int score = 0;
+
+  // some flags (hopefully self-explaining)
+  bool firstBuildCall = true;
   bool gameIsRunning = false;
   bool gameHasEnded = false;
   bool movePlayerWithPanning = true;
-  int score = 0;
-  List<Ball> balls = [];
 
   // autorepeater and keyboard focus node
   late AutoRepeater leftMoveRepeater;
@@ -41,7 +43,7 @@ class _HomePageState extends State<HomePage> {
   DateTime? dtAddBall;
   DateTime? dtLastMissileTimer;
 
-  // timer and build counter
+  // for timer and build statistics
   var timerCounter = CycleCounter();
   var buildCounter = CycleCounter();
 
@@ -61,9 +63,18 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  void startGame() {
-    print("in startGame, gameIsRunning = $gameIsRunning");
+  Size getPlayingAreaSize(BuildContext context) {
+    double height = (MediaQuery.of(context).size.height -
+            kToolbarHeight -
+            MediaQuery.of(context).padding.top) *
+        3 /
+        4;
 
+    double width = MediaQuery.of(context).size.width;
+    return Size(width, height);
+  }
+
+  void startGame() {
     if (gameIsRunning) {
       return;
     }
@@ -71,16 +82,18 @@ class _HomePageState extends State<HomePage> {
     timerCounter.reset();
     buildCounter.reset();
 
+    var playingAreaSize = getPlayingAreaSize(context);
+
     setState(() {
       gameIsRunning = true;
       gameHasEnded = false;
       score = 0;
       balls.clear();
       var ball = Ball();
-      ball.goToStartPosition();
+      ball.goToStartPosition(playingAreaSize);
       balls.add(ball);
       // reset player and missile to the center
-      player.alignX = 0;
+      player.moveToCenter(playingAreaSize);
     });
 
     dtAddBall = DateTime.now().add(const Duration(seconds: 10));
@@ -93,14 +106,14 @@ class _HomePageState extends State<HomePage> {
   void gameTimerCallback(Timer timer) {
     timerCounter.increase();
 
-    double totalHeight = getStackHeight(context);
-    double totalWidth = MediaQuery.of(context).size.width;
+    var playingAreaSize = getPlayingAreaSize(context);
+
     for (var ball in balls) {
-      ball.move(totalHeight, totalWidth);
+      ball.move(playingAreaSize);
     }
 
     if (missile != null) {
-      missile!.increase(totalHeight);
+      missile!.increase(playingAreaSize.height);
 
       //checker si le missile touche la balle
       // While iterating through a list in Android, you should not remove elements from that list.
@@ -109,8 +122,9 @@ class _HomePageState extends State<HomePage> {
       List<Ball> ballsToBeRemoved = [];
 
       for (var ball in balls) {
-        if (ball.alignY > heightToCoordinate(missile!.height, totalHeight) &&
-            (ball.alignX - missile!.alignX).abs() < 0.03) {
+        if ((ball.height < missile!.height) &&
+            (ball.left + ball.diameter / 2 - missile!.left).abs() <
+                ball.diameter / 2) {
           score++;
           ballsToBeRemoved.add(ball);
         }
@@ -127,24 +141,27 @@ class _HomePageState extends State<HomePage> {
       if (balls.isEmpty) {
         var ball = Ball();
         // let the new ball start a bit outside
-        ball.alignX = 2;
+        ball.goToStartPosition(playingAreaSize);
+        // ZZZ evtl. etwas weiter nach rechts ?!
         balls.add(ball);
       }
 
-      if (missile != null && missile!.height > totalHeight) {
+      if (missile != null && missile!.height > playingAreaSize.height) {
         missile = null;
       }
     }
 
     //check si la balle touche le joueur
-    if (playerDies(totalHeight, totalWidth)) {
+    if (playerDies(playingAreaSize)) {
       timer.cancel();
       gameIsRunning = false;
       gameHasEnded = true;
     }
 
     if (dtAddBall != null && DateTime.now().isAfter(dtAddBall!)) {
-      balls.add(Ball());
+      var ball = Ball();
+      ball.goToStartPosition(playingAreaSize);
+      balls.add(ball);
       // the better the score, the smaller is the time when an additional ball is added,
       // but give him at least 2 seconds
       int delay = 10 - score ~/ 10;
@@ -155,6 +172,19 @@ class _HomePageState extends State<HomePage> {
     }
 
     setState(() {});
+  }
+
+  bool playerDies(Size playingAreaSize) {
+    // uncomment next line e.g. for testing ball/missile collisions without being interrupted by EndGame
+    //return false;
+    for (var ball in balls) {
+      if (ball.left + ball.diameter > player.left &&
+          ball.left < player.left + player.width &&
+          ball.height < player.height) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void moveLeft() {
@@ -180,39 +210,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     missile = Missile();
-    missile!.alignX = player.alignX;
-  }
-
-// Until now the variable totalHeight was used for the height of the "player area".
-// It was calculated like this:
-//          double totalHeight = MediaQuery.of(context).size.height * 3 / 4;
-// But in this calculation the height of the AppBar (and in Android the height of the StatusBar) was missing.
-// Because "totalHeight" does not express very well what is meant, we use as function name getStackHeight,
-// as the "player area" is the Stack widget:
-  double getStackHeight(BuildContext context) {
-    double result = (MediaQuery.of(context).size.height -
-            kToolbarHeight -
-            MediaQuery.of(context).padding.top) *
-        3 /
-        4;
-    return result;
-  }
-
-  bool playerDies(double totalHeight, double totalWidth) {
-    //si la balle touche le joueur et si la position du joueur et de la balle sont la meme
-    // to avoid fake collisions when the width of Chrome is increased, we have to convert
-    // player's width and height into "alignment units":
-    // playerWidth /(totalWidth - playerWidth) = alignDistanceX / 2  => alignDistanceX = 2 * playerWidth / (totalWidth - playerWidth)
-    // experience showed that it should be smaller, so we use 1.5 instead of 2:
-    double alignDistanceX = 1.5 * player.width / (totalWidth - player.width);
-    double alignDistanceY = 1.5 * player.height / (totalHeight - player.height);
-    for (var ball in balls) {
-      if ((ball.alignX - player.alignX).abs() < alignDistanceX &&
-          ball.alignY > 1 - alignDistanceY) {
-        return true;
-      }
-    }
-    return false;
+    missile!.alignToPlayer(player);
   }
 
   // common callback for panUpdate used both for the playing area
@@ -220,11 +218,9 @@ class _HomePageState extends State<HomePage> {
   void onPanUpdate(DragUpdateDetails details) {
     if (!gameHasEnded) {
       setState(() {
-        player.alignX += deltaXToCoordinate(
-            details.delta.dx, MediaQuery.of(context).size.width);
-        player.alignX = player.alignX.clamp(-1, 1);
+        player.left += details.delta.dx;
         if (missile != null) {
-          missile!.alignX = player.alignX;
+          missile!.alignToPlayer(player);
         }
       });
     }
@@ -239,6 +235,14 @@ class _HomePageState extends State<HomePage> {
       secondsTillAdditionalBall =
           (dtAddBall!.difference(DateTime.now()).inMilliseconds / 1000);
     }
+
+    var playingAreaSize = getPlayingAreaSize(context);
+    if (firstBuildCall) {
+      firstBuildCall = false;
+      player.moveToCenter(playingAreaSize);
+    }
+
+    player.forceToPlayingArea(playingAreaSize);
 
     return Scaffold(
       appBar: AppBar(
@@ -293,14 +297,8 @@ class _HomePageState extends State<HomePage> {
                             callback: startGame,
                             displayText:
                                 gameHasEnded ? "Restart game" : "Start game"),
-                      Positioned(
-                          top: 0,
-                          left: 0,
-                          child: Text(
-                              "timersPerSecond: ${timerCounter.getCountsPerSecond().toStringAsFixed(1)}   "
-                              "buildsPerSecond: ${buildCounter.getCountsPerSecond().toStringAsFixed(1)} \n"
-                              "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter} \n"
-                              "additional ball in ${secondsTillAdditionalBall != null ? secondsTillAdditionalBall.toStringAsFixed(1) : 0}s")),
+                      showAdditionalBallInfo(secondsTillAdditionalBall),
+                      //showBuildAndTimerStatistics(),
                     ],
                   ),
                 ),
@@ -388,5 +386,23 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Widget showAdditionalBallInfo(double? secondsTillAdditionalBall) {
+    return Positioned(
+        top: 0,
+        left: 0,
+        child: Text(
+            "additional ball in ${secondsTillAdditionalBall != null ? secondsTillAdditionalBall.toStringAsFixed(1) : 0}s"));
+  }
+
+  Widget showBuildAndTimerStatistics() {
+    return Positioned(
+        top: 20,
+        left: 0,
+        child: Text(
+            "timersPerSecond: ${timerCounter.getCountsPerSecond().toStringAsFixed(1)}   "
+            "buildsPerSecond: ${buildCounter.getCountsPerSecond().toStringAsFixed(1)} \n"
+            "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter} \n"));
   }
 }

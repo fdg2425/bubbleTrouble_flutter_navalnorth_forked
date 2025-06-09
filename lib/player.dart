@@ -3,20 +3,43 @@ import 'package:flutter/material.dart';
 class Player {
   double width = 50;
   double height = 50;
-  double alignX = 0;
+  double left = 0;
+  double top = 0;
+
+  // how far the player moves in moveLeft / moveRight
+  static const _xStepWidth = 10; //
 
   void moveLeft() {
-    alignX = (alignX - 0.05).clamp(-1.0, 1.0);
+    left -= _xStepWidth;
   }
 
   void moveRight() {
-    alignX = (alignX + 0.05).clamp(-1.0, 1.0);
+    left += _xStepWidth;
+  }
+
+  void moveToCenter(Size playingAreaSize) {
+    top = playingAreaSize.height - height;
+    left = (playingAreaSize.width - width) / 2;
+    forceToPlayingArea(playingAreaSize);
+  }
+
+  void forceToPlayingArea(Size playingAreaSize) {
+    if (left + width > playingAreaSize.width) {
+      left = playingAreaSize.width - width;
+    }
+    if (left < 0) {
+      left = 0;
+    }
+    top = playingAreaSize.height - height;
+    if (top < 0) {
+      top = 0;
+    }
   }
 
   Widget getPlayerWidget() {
-    return Container(
-      //color: Colors.pink,
-      alignment: Alignment(alignX, 1),
+    return Positioned(
+      top: top,
+      left: left,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: Container(
