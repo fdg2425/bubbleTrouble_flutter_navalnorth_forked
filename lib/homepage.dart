@@ -37,9 +37,7 @@ class _HomePageState extends State<HomePage> {
   DateTime? dtLastMissileTimer;
 
   //variables missiles
-  double missileX = playerX;
-  double missileHeight = 10;
-  bool midshoot = false;
+  Missile? missile;
 
   // autorepeater
   late AutoRepeater leftMoveRepeater;
@@ -85,64 +83,81 @@ class _HomePageState extends State<HomePage> {
       balls.add(ball);
       // reset player and missile to the center
       playerX = 0;
-      missileX = 0;
     });
 
     dtAddBall = DateTime.now().add(const Duration(seconds: 10));
 
     // By increasing the cycle time to 40ms we try to ensure, that we have a
     // similar ball speed on different machines and also in Debug and Release.
-    Timer.periodic(const Duration(milliseconds: 40), (timer) {
-      timerCounter.increase();
-
-      double totalHeight = getStackHeight(context);
-      double totalWidth = MediaQuery.of(context).size.width;
-      setState(() {
-        for (var ball in balls) {
-          ball.move(totalHeight, totalWidth);
-        }
-      });
-      //check si la balle touche le joueur
-      if (playerDies(totalHeight, totalWidth)) {
-        timer.cancel();
-        gameIsRunning = false;
-        //_showDialog();
-        setState(() {
-          gameHasEnded = true;
-        });
-      }
-
-      if (dtAddBall != null && DateTime.now().isAfter(dtAddBall!)) {
-        balls.add(Ball());
-        // the better the score, the smaller is the time when an additional ball is added,
-        // but give him at least 2 seconds
-        int delay = 10 - score ~/ 10;
-        if (delay < 2) {
-          delay = 2;
-        }
-        dtAddBall = DateTime.now().add(Duration(seconds: delay));
-      }
-    });
+    Timer.periodic(const Duration(milliseconds: 40), gameTimerCallback);
   }
 
-  // Showing an Alert dialog has a disadvantage: it blocks keyboard events and tap events on other widgets
-  // As a consequence: when an AutoRepeater was active when the player get hit, this AutoRepeater did not stop.
-  // Therefore we decided to manage the end of the game in another way (with flag gameHasEnded)
-  // void _showDialog() {
-  //   showDialog(
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return AlertDialog(
-  //           backgroundColor: Colors.grey[800],
-  //           title: const Center(
-  //             child: Text(
-  //               "T'as été touché chef !",
-  //               style: TextStyle(color: Colors.white),
-  //             ),
-  //           ),
-  //         );
-  //       });
-  // }
+  void gameTimerCallback(Timer timer) {
+    timerCounter.increase();
+
+    double totalHeight = getStackHeight(context);
+    double totalWidth = MediaQuery.of(context).size.width;
+    for (var ball in balls) {
+      ball.move(totalHeight, totalWidth);
+    }
+
+    if (missile != null) {
+      missile!.increase(totalHeight);
+
+      //checker si le missile touche la balle
+      // While iterating through a list in Android, you should not remove elements from that list.
+      // Otherwise you get an "ConcurrentModificationError" exception (this does not happen on Chrome ?!).
+      // So memorize the balls to be removed in an extra list and remove them later:
+      List<Ball> ballsToBeRemoved = [];
+
+      for (var ball in balls) {
+        if (ball.alignY > heightToCoordinate(missile!.height, totalHeight) &&
+            (ball.alignX - missile!.alignX).abs() < 0.03) {
+          score++;
+          ballsToBeRemoved.add(ball);
+        }
+      }
+
+      // if at least one ball was hit, "delete" the missile
+      if (ballsToBeRemoved.isNotEmpty) {
+        missile = null;
+      }
+      for (var ball in ballsToBeRemoved) {
+        balls.remove(ball);
+      }
+      // if no more ball exists, start a new one
+      if (balls.isEmpty) {
+        var ball = Ball();
+        // let the new ball start a bit outside
+        ball.alignX = 2;
+        balls.add(ball);
+      }
+
+      if (missile != null && missile!.height > totalHeight) {
+        missile = null;
+      }
+    }
+
+    //check si la balle touche le joueur
+    if (playerDies(totalHeight, totalWidth)) {
+      timer.cancel();
+      gameIsRunning = false;
+      gameHasEnded = true;
+    }
+
+    if (dtAddBall != null && DateTime.now().isAfter(dtAddBall!)) {
+      balls.add(Ball());
+      // the better the score, the smaller is the time when an additional ball is added,
+      // but give him at least 2 seconds
+      int delay = 10 - score ~/ 10;
+      if (delay < 2) {
+        delay = 2;
+      }
+      dtAddBall = DateTime.now().add(Duration(seconds: delay));
+    }
+
+    setState(() {});
+  }
 
   void moveLeft() {
     if (gameHasEnded) {
@@ -150,11 +165,6 @@ class _HomePageState extends State<HomePage> {
     }
     setState(() {
       playerX = (playerX - 0.05).clamp(-1.0, 1.0);
-
-      // Il coordine les 2 X quand on n'est pas au milieu d'un tir
-      if (!midshoot) {
-        missileX = playerX;
-      }
     });
   }
 
@@ -164,11 +174,6 @@ class _HomePageState extends State<HomePage> {
     }
     setState(() {
       playerX = (playerX + 0.05).clamp(-1.0, 1.0);
-
-      // Il coordine les 2 X quand on n'est pas au milieu d'un tir
-      if (!midshoot) {
-        missileX = playerX;
-      }
     });
   }
 
@@ -176,67 +181,8 @@ class _HomePageState extends State<HomePage> {
     if (gameHasEnded) {
       return;
     }
-    print("playerX: $playerX, missileX: $missileX");
-    if (midshoot == false) {
-      Timer.periodic(const Duration(milliseconds: 40), (timer) {
-        // Ensure that the missile "flies" for half a second independent of the screenheight.
-        // When Android emulator was turned by 90°, missile reached the top very fast and it was difficlut to hit a ball.
-
-        double deltaHeight =
-            3; // in the first timer event, move missile for 3 pixels
-        double stackHeight = getStackHeight(context);
-        if (dtLastMissileTimer != null) {
-          deltaHeight = stackHeight *
-              DateTime.now().difference(dtLastMissileTimer!).inMilliseconds /
-              500;
-        }
-        dtLastMissileTimer = DateTime.now();
-        //missile tiré
-        midshoot = true;
-
-        // Misile jusqu'au top de l'ecran
-        setState(() {
-          // I did not understand the clamp in next line.
-          // For me "10.clamp(-1.0, 1.0)" is the same as 1.
-          //missileHeight += 10.clamp(-1.0, 1.0);
-          missileHeight += deltaHeight; // increased missile speed
-        });
-
-        //arreter missiles quand ca arrive au top
-        if (missileHeight > stackHeight) {
-          resetMissile();
-          timer.cancel();
-        }
-
-        //checker si le missile touche la balle
-        // While iterating through a list in Android, you should not remove elements from that list.
-        // Otherwise you get an "ConcurrentModificationError" exception (this does not happen on Chrome ?!).
-        // So memorize the balls to be removed in an extra list and remove them later:
-        List<Ball> ballsToBeRemoved = [];
-
-        for (var ball in balls) {
-          if (ball.alignY > heightToCoordinate(missileHeight, stackHeight) &&
-              (ball.alignX - missileX).abs() < 0.03) {
-            resetMissile();
-            timer.cancel();
-            setState(() {
-              score++;
-              ballsToBeRemoved.add(ball);
-            });
-          }
-        }
-        for (var ball in ballsToBeRemoved) {
-          balls.remove(ball);
-        }
-        // if no more ball exists, start a new one
-        if (balls.isEmpty) {
-          var ball = Ball();
-          // let the new ball start a bit outside
-          ball.alignX = 2;
-          balls.add(ball);
-        }
-      });
-    }
+    missile = Missile();
+    missile!.alignX = playerX;
   }
 
 // Until now the variable totalHeight was used for the height of the "player area".
@@ -252,13 +198,6 @@ class _HomePageState extends State<HomePage> {
         3 /
         4;
     return result;
-  }
-
-  void resetMissile() {
-    missileHeight = playerX;
-    missileHeight = 0;
-    midshoot = false;
-    dtLastMissileTimer = null;
   }
 
   bool playerDies(double totalHeight, double totalWidth) {
@@ -278,7 +217,7 @@ class _HomePageState extends State<HomePage> {
     return false;
   }
 
-  // common callback for pPanUpdate used both for the playing area
+  // common callback for panUpdate used both for the playing area
   // and for the "panning area" introduced on bottom right.
   void onPanUpdate(DragUpdateDetails details) {
     if (!gameHasEnded) {
@@ -286,8 +225,8 @@ class _HomePageState extends State<HomePage> {
         playerX += deltaXToCoordinate(
             details.delta.dx, MediaQuery.of(context).size.width);
         playerX = playerX.clamp(-1, 1);
-        if (!midshoot) {
-          missileX = playerX;
+        if (missile != null) {
+          missile!.alignX = playerX;
         }
       });
     }
@@ -347,7 +286,7 @@ class _HomePageState extends State<HomePage> {
                     alignment: Alignment.center,
                     children: [
                       ScoreDisplay(score: score),
-                      MyMissile(height: missileHeight, missileX: missileX),
+                      if (missile != null) missile!.getMissileWidget(),
                       Align(
                         alignment: Alignment(playerX, 1),
                         child: MyPlayer(playerX: playerX),
