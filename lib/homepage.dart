@@ -24,23 +24,22 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   //variables joueur
-  static double playerX = 0;
-  final FocusNode _focusNode = FocusNode();
+  var player = Player();
+  Missile? missile;
   bool gameIsRunning = false;
   bool gameHasEnded = false;
   bool movePlayerWithPanning = true;
   int score = 0;
   List<Ball> balls = [];
+
+  // autorepeater and keyboard focus node
+  late AutoRepeater leftMoveRepeater;
+  late AutoRepeater rightMoveRepeater;
+  final FocusNode _focusNode = FocusNode();
+
   // time to add an additional ball (initialized to be "far away")
   DateTime? dtAddBall;
   DateTime? dtLastMissileTimer;
-
-  //variables missiles
-  Missile? missile;
-
-  // autorepeater
-  late AutoRepeater leftMoveRepeater;
-  late AutoRepeater rightMoveRepeater;
 
   // timer and build counter
   var timerCounter = CycleCounter();
@@ -81,7 +80,7 @@ class _HomePageState extends State<HomePage> {
       ball.goToStartPosition();
       balls.add(ball);
       // reset player and missile to the center
-      playerX = 0;
+      player.alignX = 0;
     });
 
     dtAddBall = DateTime.now().add(const Duration(seconds: 10));
@@ -163,7 +162,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     setState(() {
-      playerX = (playerX - 0.05).clamp(-1.0, 1.0);
+      player.moveLeft();
     });
   }
 
@@ -172,7 +171,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     setState(() {
-      playerX = (playerX + 0.05).clamp(-1.0, 1.0);
+      player.moveRight();
     });
   }
 
@@ -181,7 +180,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     missile = Missile();
-    missile!.alignX = playerX;
+    missile!.alignX = player.alignX;
   }
 
 // Until now the variable totalHeight was used for the height of the "player area".
@@ -205,10 +204,10 @@ class _HomePageState extends State<HomePage> {
     // player's width and height into "alignment units":
     // playerWidth /(totalWidth - playerWidth) = alignDistanceX / 2  => alignDistanceX = 2 * playerWidth / (totalWidth - playerWidth)
     // experience showed that it should be smaller, so we use 1.5 instead of 2:
-    double alignDistanceX = 1.5 * playerWidth / (totalWidth - playerWidth);
-    double alignDistanceY = 1.5 * playerHeight / (totalHeight - playerHeight);
+    double alignDistanceX = 1.5 * player.width / (totalWidth - player.width);
+    double alignDistanceY = 1.5 * player.height / (totalHeight - player.height);
     for (var ball in balls) {
-      if ((ball.alignX - playerX).abs() < alignDistanceX &&
+      if ((ball.alignX - player.alignX).abs() < alignDistanceX &&
           ball.alignY > 1 - alignDistanceY) {
         return true;
       }
@@ -221,11 +220,11 @@ class _HomePageState extends State<HomePage> {
   void onPanUpdate(DragUpdateDetails details) {
     if (!gameHasEnded) {
       setState(() {
-        playerX += deltaXToCoordinate(
+        player.alignX += deltaXToCoordinate(
             details.delta.dx, MediaQuery.of(context).size.width);
-        playerX = playerX.clamp(-1, 1);
+        player.alignX = player.alignX.clamp(-1, 1);
         if (missile != null) {
-          missile!.alignX = playerX;
+          missile!.alignX = player.alignX;
         }
       });
     }
@@ -286,10 +285,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       ScoreDisplay(score: score),
                       if (missile != null) missile!.getMissileWidget(),
-                      Align(
-                        alignment: Alignment(playerX, 1),
-                        child: MyPlayer(playerX: playerX),
-                      ),
+                      player.getPlayerWidget(),
                       // show the balls on top of the player to better see the collisions
                       for (var ball in balls) ball.getBallWidget(),
                       if (!gameIsRunning)

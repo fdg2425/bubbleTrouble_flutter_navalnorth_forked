@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 
-const double playerWidth = 50;
-const double playerHeight = 50;
+class Player {
+  double width = 50;
+  double height = 50;
+  double alignX = 0;
 
-class MyPlayer extends StatelessWidget {
-  final double playerX;
+  void moveLeft() {
+    alignX = (alignX - 0.05).clamp(-1.0, 1.0);
+  }
 
-  const MyPlayer({super.key, required this.playerX});
+  void moveRight() {
+    alignX = (alignX + 0.05).clamp(-1.0, 1.0);
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget getPlayerWidget() {
     return Container(
       //color: Colors.pink,
-      alignment: Alignment(playerX, 1),
+      alignment: Alignment(alignX, 1),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: Container(
           color: Colors.deepPurple,
-          height: playerHeight,
-          width: playerWidth,
+          height: height,
+          width: width,
         ),
       ),
     );
