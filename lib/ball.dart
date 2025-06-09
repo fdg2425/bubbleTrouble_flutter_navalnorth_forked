@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
+
 import 'utilities.dart';
 
 enum Direction { left, right }
@@ -63,5 +65,17 @@ class Ball {
     }
     // Le temps s'incremente
     time += 0.1;
+  }
+
+  Widget getBallWidget() {
+    return Container(
+      alignment: Alignment(alignX, alignY),
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration:
+            const BoxDecoration(shape: BoxShape.circle, color: Colors.red),
+      ),
+    );
   }
 }

@@ -11,7 +11,6 @@ import 'missile.dart';
 import 'player.dart';
 import 'player_movement_selection.dart';
 import 'auto_repeater.dart';
-import 'ball_widget.dart';
 import 'score_display.dart';
 import 'start_game_widget.dart';
 import 'utilities.dart';
@@ -292,7 +291,7 @@ class _HomePageState extends State<HomePage> {
                         child: MyPlayer(playerX: playerX),
                       ),
                       // show the balls on top of the player to better see the collisions
-                      for (var ball in balls) BallWidget(ball: ball),
+                      for (var ball in balls) ball.getBallWidget(),
                       if (!gameIsRunning)
                         StartGameWidget(
                             callback: startGame,
