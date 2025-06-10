@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
-import 'auto_repeater.dart';
+import '../helper_classes/auto_repeater.dart';
 
 class MyButton extends StatelessWidget {
   final IconData icon;

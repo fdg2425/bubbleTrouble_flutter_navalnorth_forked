@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'settings/settings_provider.dart';
 import 'ball.dart';
-import 'button.dart';
-import 'cycle_counter.dart';
+import 'helper_widgets/button.dart';
+import 'helper_classes/cycle_counter.dart';
 import 'missile.dart';
 import 'player.dart';
-import 'auto_repeater.dart';
-import 'score_display.dart';
-import 'settings_button.dart';
-import 'start_game_widget.dart';
+import 'helper_classes/auto_repeater.dart';
+import 'helper_widgets/score_display.dart';
+import 'helper_widgets/show_settings_button.dart';
+import 'helper_widgets/start_game_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

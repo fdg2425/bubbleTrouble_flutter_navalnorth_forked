@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:saute_mouton/settings/settings_provider.dart';
 
-import 'settings/settings_page.dart';
+import '../settings/settings_page.dart';
 
 class ShowSettingsButton extends StatelessWidget {
   const ShowSettingsButton(
