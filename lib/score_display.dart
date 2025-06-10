@@ -11,7 +11,7 @@ class ScoreDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        alignment: const Alignment(0.85, -0.9),
+        alignment: const Alignment(0, -0.70),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
           decoration: BoxDecoration(

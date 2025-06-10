@@ -4,14 +4,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'settings/settings_provider.dart';
 import 'ball.dart';
 import 'button.dart';
 import 'cycle_counter.dart';
 import 'missile.dart';
 import 'player.dart';
-import 'player_movement_selection.dart';
 import 'auto_repeater.dart';
 import 'score_display.dart';
+import 'settings_button.dart';
 import 'start_game_widget.dart';
 
 class HomePage extends StatefulWidget {
@@ -22,6 +23,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // the SettingsProvider
+  late SettingsProvider settingsProvider;
   //variables joueur
   var player = Player();
   Missile? missile;
@@ -31,7 +34,6 @@ class _HomePageState extends State<HomePage> {
   // some flags (hopefully self-explaining)
   bool firstBuildCall = true;
   bool gameIsRunning = false;
-  bool gameHasEnded = false;
   bool movePlayerWithPanning = true;
 
   // autorepeater and keyboard focus node
@@ -52,6 +54,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     leftMoveRepeater = AutoRepeater(moveLeft);
     rightMoveRepeater = AutoRepeater(moveRight);
+    settingsProvider = SettingsProvider(callbackOnSettingsChange: refresh);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -63,16 +66,28 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  void refresh() {
+    setState(() {});
+  }
+
   Size getPlayingAreaSize(BuildContext context) {
-    double height = (MediaQuery.of(context).size.height -
-            kToolbarHeight -
-            MediaQuery.of(context).padding.top) *
-        3 /
-        4;
+    // in case we have an AppBar:
+    // double height = (MediaQuery.of(context).size.height -
+    //         //kToolbarHeight -  // we now loger show an AppBar
+    //         MediaQuery.of(context).padding.top) *
+    //     3 /
+    //     4;
+    double height = MediaQuery.of(context).size.height * 3 / 4;
 
     double width = MediaQuery.of(context).size.width;
     return Size(width, height);
   }
+
+  // the margin we leave in PlayingArea on left, top and right e.g. for the SettingsButton
+  final double playingAreaInset = 5;
+
+  double getFirstLineTop() =>
+      MediaQuery.of(context).padding.top + playingAreaInset;
 
   void startGame() {
     if (gameIsRunning) {
@@ -86,7 +101,6 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       gameIsRunning = true;
-      gameHasEnded = false;
       score = 0;
       balls.clear();
       var ball = Ball();
@@ -155,7 +169,6 @@ class _HomePageState extends State<HomePage> {
     if (playerDies(playingAreaSize)) {
       timer.cancel();
       gameIsRunning = false;
-      gameHasEnded = true;
     }
 
     if (dtAddBall != null && DateTime.now().isAfter(dtAddBall!)) {
@@ -188,35 +201,32 @@ class _HomePageState extends State<HomePage> {
   }
 
   void moveLeft() {
-    if (gameHasEnded) {
-      return;
+    if (gameIsRunning) {
+      setState(() {
+        player.moveLeft();
+      });
     }
-    setState(() {
-      player.moveLeft();
-    });
   }
 
   void moveRight() {
-    if (gameHasEnded) {
-      return;
+    if (gameIsRunning) {
+      setState(() {
+        player.moveRight();
+      });
     }
-    setState(() {
-      player.moveRight();
-    });
   }
 
   void fireMissile() {
-    if (gameHasEnded) {
-      return;
+    if (gameIsRunning) {
+      missile = Missile();
+      missile!.alignToPlayer(player);
     }
-    missile = Missile();
-    missile!.alignToPlayer(player);
   }
 
   // common callback for panUpdate used both for the playing area
   // and for the "panning area" introduced on bottom right.
   void onPanUpdate(DragUpdateDetails details) {
-    if (!gameHasEnded) {
+    if (gameIsRunning) {
       setState(() {
         player.left += details.delta.dx;
         if (missile != null) {
@@ -245,12 +255,12 @@ class _HomePageState extends State<HomePage> {
     player.forceToPlayingArea(playingAreaSize);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Bubble trouble", style: TextStyle(fontSize: 28)),
-        backgroundColor: Colors.grey,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-      ),
+      // appBar: AppBar(
+      //   title: const Text("Bubble trouble", style: TextStyle(fontSize: 28)),
+      //   backgroundColor: Colors.transparent,
+      //   foregroundColor: Colors.white,
+      //   centerTitle: true,
+      // ),
       body: KeyboardListener(
         focusNode: _focusNode,
         autofocus: true,
@@ -287,6 +297,11 @@ class _HomePageState extends State<HomePage> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
+                      ShowSettingsButton(
+                        top: getFirstLineTop() + 3,
+                        right: playingAreaInset,
+                        settingsProvider: settingsProvider,
+                      ),
                       ScoreDisplay(score: score),
                       if (missile != null) missile!.getMissileWidget(),
                       player.getPlayerWidget(),
@@ -294,10 +309,9 @@ class _HomePageState extends State<HomePage> {
                       for (var ball in balls) ball.getBallWidget(),
                       if (!gameIsRunning)
                         StartGameWidget(
-                            callback: startGame,
-                            displayText:
-                                gameHasEnded ? "Restart game" : "Start game"),
-                      showAdditionalBallInfo(secondsTillAdditionalBall),
+                            callback: startGame, displayText: "Start game"),
+                      if (gameIsRunning)
+                        showAdditionalBallInfo(secondsTillAdditionalBall),
                       //showBuildAndTimerStatistics(),
                     ],
                   ),
@@ -310,26 +324,16 @@ class _HomePageState extends State<HomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    if (gameIsRunning)
-                      Expanded(
-                          flex: 1,
-                          child: MyButton(
-                              icon: Icons.arrow_upward, function: fireMissile)),
+                    Expanded(
+                        flex: 1,
+                        child: MyButton(
+                            icon: Icons.arrow_upward, function: fireMissile)),
                     Expanded(
                       flex: 3,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (!gameIsRunning)
-                            PlayerMovementSelection(
-                              usePanning: movePlayerWithPanning,
-                              callback: (value) {
-                                setState(() {
-                                  movePlayerWithPanning = value;
-                                });
-                              },
-                            ),
-                          if (gameIsRunning && !movePlayerWithPanning)
+                          if (settingsProvider.showButtonsForPlayerMovement)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -344,7 +348,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-                          if (gameIsRunning && movePlayerWithPanning)
+                          if (!settingsProvider.showButtonsForPlayerMovement)
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
@@ -390,19 +394,21 @@ class _HomePageState extends State<HomePage> {
 
   Widget showAdditionalBallInfo(double? secondsTillAdditionalBall) {
     return Positioned(
-        top: 0,
-        left: 0,
+        top: getFirstLineTop(),
+        left: playingAreaInset,
         child: Text(
-            "additional ball in ${secondsTillAdditionalBall != null ? secondsTillAdditionalBall.toStringAsFixed(1) : 0}s"));
+            "additional ball in ${secondsTillAdditionalBall != null ? secondsTillAdditionalBall.toStringAsFixed(1) : 0}s",
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 16)));
   }
 
   Widget showBuildAndTimerStatistics() {
     return Positioned(
-        top: 20,
-        left: 0,
+        top: getFirstLineTop() + 20,
+        left: playingAreaInset,
         child: Text(
             "timersPerSecond: ${timerCounter.getCountsPerSecond().toStringAsFixed(1)}   "
             "buildsPerSecond: ${buildCounter.getCountsPerSecond().toStringAsFixed(1)} \n"
-            "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter} \n"));
+            "timerCounter: ${timerCounter.counter}   buildCounter: ${buildCounter.counter} \n",
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 16)));
   }
 }
