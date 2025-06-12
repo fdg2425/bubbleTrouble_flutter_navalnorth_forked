@@ -25,6 +25,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // the SettingsProvider
   late SettingsProvider settingsProvider;
+
   //variables joueur
   var player = Player();
   Missile? missile;
@@ -34,7 +35,6 @@ class _HomePageState extends State<HomePage> {
   // some flags (hopefully self-explaining)
   bool firstBuildCall = true;
   bool gameIsRunning = false;
-  bool movePlayerWithPanning = true;
 
   // autorepeater and keyboard focus node
   late AutoRepeater leftMoveRepeater;
@@ -70,17 +70,32 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
-  Size getPlayingAreaSize(BuildContext context) {
-    // in case we have an AppBar:
-    // double height = (MediaQuery.of(context).size.height -
-    //         //kToolbarHeight -  // we now loger show an AppBar
-    //         MediaQuery.of(context).padding.top) *
-    //     3 /
-    //     4;
-    double height = MediaQuery.of(context).size.height * 3 / 4;
+  // adapt layout according to screen size
+  static const double maxBottomRowHeight = 120;
+  double bottomRowHeight = maxBottomRowHeight;
 
-    double width = MediaQuery.of(context).size.width;
-    return Size(width, height);
+  // when we have enough place, make buttons quadratic
+  static const double maxWidthOfBottomButtoms =
+      maxBottomRowHeight - 2 * MyButton.padding;
+  double widthOfBottomButtons = maxWidthOfBottomButtoms;
+
+  Size getPlayingAreaSize(BuildContext context) {
+    var screenHeight = MediaQuery.of(context).size.height;
+    bottomRowHeight = (screenHeight > 400) ? maxBottomRowHeight : 80;
+
+    double screenWidth = MediaQuery.of(context).size.width;
+    //print("screenWidth: $screenWidth");
+
+    // calculate size of the buttons in the bottom row:
+    // we have 3 buttons -> we have 6 paddings in x-direction
+    widthOfBottomButtons = (screenWidth - 6 * MyButton.padding) / 3;
+    //print("widthOfBottomButtons before limiting: $widthOfBottomButtons");
+
+    if (widthOfBottomButtons > maxWidthOfBottomButtoms) {
+      widthOfBottomButtons = maxWidthOfBottomButtoms;
+    }
+
+    return Size(screenWidth, screenHeight - bottomRowHeight);
   }
 
   // the margin we leave in PlayingArea on left, top and right e.g. for the SettingsButton
@@ -201,21 +216,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   void moveLeft() {
-    if (gameIsRunning) {
-      setState(() {
-        player.moveLeft();
-      });
-    }
+    setState(() {
+      player.moveLeft();
+    });
   }
 
   void moveRight() {
-    if (gameIsRunning) {
-      setState(() {
-        player.moveRight();
-      });
-    }
+    setState(() {
+      player.moveRight();
+    });
   }
 
+  // fire_missile is only allowed while game is running,
+  // because otherwise we have to timer "to move" the missile
   void fireMissile() {
     if (gameIsRunning) {
       missile = Missile();
@@ -226,14 +239,12 @@ class _HomePageState extends State<HomePage> {
   // common callback for panUpdate used both for the playing area
   // and for the "panning area" introduced on bottom right.
   void onPanUpdate(DragUpdateDetails details) {
-    if (gameIsRunning) {
-      setState(() {
-        player.left += details.delta.dx;
-        if (missile != null) {
-          missile!.alignToPlayer(player);
-        }
-      });
-    }
+    setState(() {
+      player.left += details.delta.dx;
+      if (missile != null) {
+        missile!.alignToPlayer(player);
+      }
+    });
   }
 
   @override
@@ -289,7 +300,6 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Expanded(
-              flex: 3,
               child: GestureDetector(
                 onPanUpdate: onPanUpdate,
                 child: Container(
@@ -318,72 +328,69 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            Expanded(
-              child: Container(
-                color: Colors.grey,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                        flex: 1,
-                        child: MyButton(
-                            icon: Icons.arrow_upward, function: fireMissile)),
-                    Expanded(
-                      flex: 3,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (settingsProvider.showButtonsForPlayerMovement)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                MyButton(
-                                  icon: Icons.arrow_back,
-                                  repeater: leftMoveRepeater,
-                                ),
-                                const SizedBox(width: 20),
-                                MyButton(
-                                  icon: Icons.arrow_forward,
-                                  repeater: rightMoveRepeater,
-                                ),
-                              ],
-                            ),
-                          if (!settingsProvider.showButtonsForPlayerMovement)
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: GestureDetector(
-                                  onPanUpdate: onPanUpdate,
-                                  child: Container(
-                                      alignment: Alignment.center,
-                                      height: double.infinity,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade800,
-                                          border: Border.all(
-                                              color: Colors.white,
-                                              width: 2), // Grey border
-                                          borderRadius: BorderRadius.circular(
-                                              15)), // Rounded corners
-
-                                      child: const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Text(
-                                          "pan here or in the playing area to move the player",
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
+            Container(
+              height: bottomRowHeight,
+              color: Colors.grey,
+              child: Row(
+                children: [
+                  MyButton(
+                      width: widthOfBottomButtons,
+                      isActive: gameIsRunning,
+                      icon: Icons.arrow_upward,
+                      function: fireMissile),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (settingsProvider.showButtonsForPlayerMovement)
+                          Row(
+                            children: [
+                              MyButton(
+                                width: widthOfBottomButtons,
+                                icon: Icons.arrow_back,
+                                repeater: leftMoveRepeater,
+                              ),
+                              MyButton(
+                                width: widthOfBottomButtons,
+                                icon: Icons.arrow_forward,
+                                repeater: rightMoveRepeater,
+                              ),
+                            ],
+                          ),
+                        if (!settingsProvider.showButtonsForPlayerMovement)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: GestureDetector(
+                                onPanUpdate: onPanUpdate,
+                                child: Container(
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                        color: Colors.grey.shade800,
+                                        border: Border.all(
                                             color: Colors.white,
-                                          ),
+                                            width: 2), // Grey border
+                                        borderRadius: BorderRadius.circular(
+                                            15)), // Rounded corners
+
+                                    child: const Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 20),
+                                      child: Text(
+                                        "pan here or in the playing area to move the player",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.white,
                                         ),
-                                      )),
-                                ),
+                                      ),
+                                    )),
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],

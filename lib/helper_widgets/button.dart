@@ -4,11 +4,21 @@ import 'package:flutter/material.dart';
 import '../helper_classes/auto_repeater.dart';
 
 class MyButton extends StatelessWidget {
+  final double width;
+  final bool isActive;
   final IconData icon;
   final VoidCallback? function;
   final AutoRepeater? repeater;
 
-  const MyButton({super.key, required this.icon, this.function, this.repeater});
+  static const double padding = 10;
+
+  const MyButton(
+      {super.key,
+      required this.width,
+      this.isActive = true,
+      required this.icon,
+      this.function,
+      this.repeater});
 
   @override
   Widget build(BuildContext context) {
@@ -40,13 +50,12 @@ class MyButton extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(padding),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: Container(
-            color: Colors.grey[100],
-            width: 120,
-            // height: 50,
+            color: isActive ? Colors.grey[100] : Colors.grey[400],
+            width: width,
             child: Center(
               child: Icon(icon),
             ),
