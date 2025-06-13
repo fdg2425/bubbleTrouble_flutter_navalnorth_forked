@@ -1,9 +1,9 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'helper_widgets/fdg_logo_animation_widget.dart';
 import 'settings/settings_provider.dart';
 import 'ball.dart';
 import 'helper_widgets/button.dart';
@@ -22,7 +22,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   // the SettingsProvider
   late SettingsProvider settingsProvider;
 
@@ -45,6 +46,16 @@ class _HomePageState extends State<HomePage> {
   DateTime? dtAddBall;
   DateTime? dtLastMissileTimer;
 
+  // for animation
+  // BTW: the code for the animation was taken from Gemini after asking 4 questions:
+  // a) Flutter rotate image animation
+  // b) Is this possible without AnimationBuilder by using _animation.value in a Matrix4
+  // c) how to run the animation only once started e.g. by a button press
+  // d) how to make animation not linear, but first fast and then slow
+
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
   // for timer and build statistics
   var timerCounter = CycleCounter();
   var buildCounter = CycleCounter();
@@ -58,11 +69,40 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
+
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2), // Duration for one full rotation
+      vsync: this, // The TickerProvider
+    );
+
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: 1, // One full circle
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic, // Or Curves.easeOut, Curves.decelerate, etc.
+    ));
+
+    // IMPORTANT: Add a listener to rebuild the widget on every animation tick
+    _animation.addListener(() {
+      setState(() {
+        // This will trigger a rebuild of the entire Matrix4RotationScreen
+        // whenever the _animation's value changes.
+      });
+    });
+
+    // Make the animation repeat indefinitely
+    //_controller.repeat();
+    _controller.forward();
   }
 
   @override
   void dispose() {
     _focusNode.dispose();
+    _animation
+        .removeListener(() {}); // Remove the listener to prevent memory leaks
+    _controller.dispose(); // Important: Dispose the controller
+
     super.dispose();
   }
 
@@ -99,7 +139,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // the margin we leave in PlayingArea on left, top and right e.g. for the SettingsButton
-  final double playingAreaInset = 5;
+  final double playingAreaInset = 8;
 
   double getFirstLineTop() =>
       MediaQuery.of(context).padding.top + playingAreaInset;
@@ -125,7 +165,9 @@ class _HomePageState extends State<HomePage> {
       player.moveToCenter(playingAreaSize);
     });
 
-    dtAddBall = DateTime.now().add(const Duration(seconds: 10));
+    // First we started with 10. But then the text displayed in the game shrinks when going from 10 to 9.
+    // That did not look good. So we start with 9.
+    dtAddBall = DateTime.now().add(const Duration(seconds: 9));
 
     // By increasing the cycle time to 40ms we try to ensure, that we have a
     // similar ball speed on different machines and also in Debug and Release.
@@ -307,8 +349,13 @@ class _HomePageState extends State<HomePage> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
+                      FdgLogoAnimationWidget(
+                          finalTop: getFirstLineTop(),
+                          finalLeft: playingAreaInset,
+                          animation: _animation,
+                          playingAreaSize: playingAreaSize),
                       ShowSettingsButton(
-                        top: getFirstLineTop() + 3,
+                        top: getFirstLineTop(),
                         right: playingAreaInset,
                         settingsProvider: settingsProvider,
                       ),
@@ -400,9 +447,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget showAdditionalBallInfo(double? secondsTillAdditionalBall) {
-    return Positioned(
-        top: getFirstLineTop(),
-        left: playingAreaInset,
+    return Container(
+        margin: EdgeInsets.only(top: getFirstLineTop()),
+        alignment: Alignment.topCenter,
         child: Text(
             "additional ball in ${secondsTillAdditionalBall != null ? secondsTillAdditionalBall.toStringAsFixed(1) : 0}s",
             style: TextStyle(color: Colors.grey.shade600, fontSize: 16)));
