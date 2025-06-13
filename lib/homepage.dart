@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'helper_widgets/fdg_logo_animation_widget.dart';
+import 'helper_widgets/title_animation_widget.dart';
 import 'settings/settings_provider.dart';
 import 'ball.dart';
 import 'helper_widgets/button.dart';
@@ -36,6 +37,7 @@ class _HomePageState extends State<HomePage>
   // some flags (hopefully self-explaining)
   bool firstBuildCall = true;
   bool gameIsRunning = false;
+  bool showTitle = true;
 
   // autorepeater and keyboard focus node
   late AutoRepeater leftMoveRepeater;
@@ -151,6 +153,7 @@ class _HomePageState extends State<HomePage>
 
     timerCounter.reset();
     buildCounter.reset();
+    showTitle = false;
 
     var playingAreaSize = getPlayingAreaSize(context);
 
@@ -352,14 +355,18 @@ class _HomePageState extends State<HomePage>
                       FdgLogoAnimationWidget(
                           finalTop: getFirstLineTop(),
                           finalLeft: playingAreaInset,
-                          animation: _animation,
+                          animationValue: _animation.value,
                           playingAreaSize: playingAreaSize),
+                      if (showTitle)
+                        TitleAnimationWidget(
+                          animationValue: _animation.value,
+                        ),
                       ShowSettingsButton(
                         top: getFirstLineTop(),
                         right: playingAreaInset,
                         settingsProvider: settingsProvider,
                       ),
-                      ScoreDisplay(score: score),
+                      if (!showTitle) ScoreDisplay(score: score),
                       if (missile != null) missile!.getMissileWidget(),
                       player.getPlayerWidget(),
                       // show the balls on top of the player to better see the collisions

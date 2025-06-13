@@ -10,7 +10,8 @@ class StartGameWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        alignment: const Alignment(0, 0), // centered in playing area
+        alignment: const Alignment(
+            0, 0.2), // centered in playing area, but due to title a bit deeper
         child: GestureDetector(
           onTap: callback,
           child: Container(
