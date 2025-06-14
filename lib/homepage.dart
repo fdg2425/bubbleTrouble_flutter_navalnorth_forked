@@ -112,6 +112,11 @@ class _HomePageState extends State<HomePage>
     setState(() {});
   }
 
+  void restartAnimation() {
+    _controller.reset();
+    _controller.forward();
+  }
+
   // adapt layout according to screen size
   static const double maxBottomRowHeight = 120;
   double bottomRowHeight = maxBottomRowHeight;
@@ -360,10 +365,13 @@ class _HomePageState extends State<HomePage>
                       if (showTitle)
                         TitleAnimationWidget(
                           animationValue: _animation.value,
+                          callbackOnDoubleTap: restartAnimation,
                         ),
                       ShowSettingsButton(
-                        top: getFirstLineTop(),
-                        right: playingAreaInset,
+                        finalTop: getFirstLineTop(),
+                        finalRight: playingAreaInset,
+                        animationValue: _animation.value,
+                        playingAreaSize: playingAreaSize,
                         settingsProvider: settingsProvider,
                       ),
                       if (!showTitle)

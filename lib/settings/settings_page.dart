@@ -126,8 +126,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text("Version info", style: textStyleUnderlined),
                   Text(
-                      "This is version 0.2 from 12-June-2025,\n"
-                      "developped during a Flutter training at FDG.",
+                      "This is version 0.3 from 14-June-2025,\n"
+                      "developed during a Flutter training at FDG.",
                       style: textStyleNormal),
                 ],
               ),
