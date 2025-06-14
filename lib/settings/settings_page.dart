@@ -33,28 +33,49 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(10.0, 20, 10, 10),
-              child: Text("Which controls should be shown to move the player?",
+              child: Text(
+                  "This game was developed based on a video of Mitch Koko and a GitHub project from Irina Vasilescu. "
+                  "They used different designs.\nWhich one should be used ?",
                   style: textStyleNormal),
             ),
-            // without a SizedBox around the RadioListTile I got
-            // "BoxConstraints forces an infinite width."
             RadioListTile<bool>(
-              title: Text("buttons with left and right arrows",
+              title: Text("Irina's one (blue and green and player as an alien)",
                   style: textStyleNormal),
               value: true,
-              groupValue: widget.settingsProvider.showButtonsForPlayerMovement,
+              groupValue: widget.settingsProvider.showIrinaLayout,
               onChanged: (bool? value) {
                 if (value != null) {
-                  // next setState is needed to update the Radiobuttons
                   setState(() {
-                    widget.settingsProvider.showButtonsForPlayerMovement = true;
+                    widget.settingsProvider.showIrinaLayout = true;
                   });
                 }
               },
             ),
             RadioListTile<bool>(
               title: Text(
-                  "an extra panning area to move the player with gestures",
+                  "Mitch's one (pink and grey and player as a rectangle)",
+                  style: textStyleNormal),
+              value: false,
+              groupValue: widget.settingsProvider.showIrinaLayout,
+              onChanged: (bool? value) {
+                if (value != null) {
+                  setState(() {
+                    widget.settingsProvider.showIrinaLayout = false;
+                  });
+                }
+              },
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10.0, 20, 10, 10),
+              child: Text("Which controls should be shown to move the player?",
+                  style: textStyleNormal),
+            ),
+            // without a SizedBox around the RadioListTile I got
+            // "BoxConstraints forces an infinite width."
+            RadioListTile<bool>(
+              title: Text(
+                  "a special panning area to move the player with gestures",
                   style: textStyleNormal),
               value: false,
               groupValue: widget.settingsProvider.showButtonsForPlayerMovement,
@@ -63,6 +84,21 @@ class _SettingsPageState extends State<SettingsPage> {
                   setState(() {
                     widget.settingsProvider.showButtonsForPlayerMovement =
                         false;
+                  });
+                }
+              },
+            ),
+            RadioListTile<bool>(
+              title: Text(
+                  "buttons with left and right arrows as used by Mitch and Irina",
+                  style: textStyleNormal),
+              value: true,
+              groupValue: widget.settingsProvider.showButtonsForPlayerMovement,
+              onChanged: (bool? value) {
+                if (value != null) {
+                  // next setState is needed to update the Radiobuttons
+                  setState(() {
+                    widget.settingsProvider.showButtonsForPlayerMovement = true;
                   });
                 }
               },

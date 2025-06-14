@@ -348,7 +348,7 @@ class _HomePageState extends State<HomePage>
               child: GestureDetector(
                 onPanUpdate: onPanUpdate,
                 child: Container(
-                  color: Colors.pink[100],
+                  color: settingsProvider.layout.playGroundBackgroundColor,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
@@ -366,9 +366,13 @@ class _HomePageState extends State<HomePage>
                         right: playingAreaInset,
                         settingsProvider: settingsProvider,
                       ),
-                      if (!showTitle) ScoreDisplay(score: score),
+                      if (!showTitle)
+                        ScoreDisplay(
+                          score: score,
+                          layout: settingsProvider.layout,
+                        ),
                       if (missile != null) missile!.getMissileWidget(),
-                      player.getPlayerWidget(),
+                      player.getPlayerWidget(settingsProvider.layout),
                       // show the balls on top of the player to better see the collisions
                       for (var ball in balls) ball.getBallWidget(),
                       if (!gameIsRunning)
@@ -384,7 +388,7 @@ class _HomePageState extends State<HomePage>
             ),
             Container(
               height: bottomRowHeight,
-              color: Colors.grey,
+              color: settingsProvider.layout.bottomRowBackgroundColor,
               child: Row(
                 children: [
                   MyButton(
@@ -459,7 +463,9 @@ class _HomePageState extends State<HomePage>
         alignment: Alignment.topCenter,
         child: Text(
             "additional ball in ${secondsTillAdditionalBall != null ? secondsTillAdditionalBall.toStringAsFixed(1) : 0}s",
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 16)));
+            style: TextStyle(
+                color: settingsProvider.layout.playgroundTextColor,
+                fontSize: 16)));
   }
 
   Widget showBuildAndTimerStatistics() {

@@ -15,7 +15,7 @@ class Ball {
   // as all balls follow similar curves.
   Ball() {
     var random = Random();
-    speedY = 180 + 60 * random.nextDouble();
+    speedY = 200 + 60 * random.nextDouble();
     speedX = -5 + 2 * random.nextDouble();
   }
 

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'helper_classes/layout.dart';
+
 class Player {
-  double width = 50;
-  double height = 50;
+  double width = 60;
+  double height = 80;
   double left = 0;
   double top = 0;
 
@@ -36,18 +38,25 @@ class Player {
     }
   }
 
-  Widget getPlayerWidget() {
+  Widget getPlayerWidget(Layout layout) {
     return Positioned(
-      top: top,
-      left: left,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          color: Colors.deepPurple,
-          height: height,
-          width: width,
-        ),
-      ),
-    );
+        top: top,
+        left: left,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            color: layout.playerBackgroundColor,
+            height: height,
+            width: width,
+            decoration: layout.pathForPlayerIcon == null
+                ? null
+                : BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(layout.pathForPlayerIcon!),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+          ),
+        ));
   }
 }

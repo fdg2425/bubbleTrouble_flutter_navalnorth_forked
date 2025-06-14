@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../helper_classes/layout.dart';
+
 class ScoreDisplay extends StatelessWidget {
   const ScoreDisplay({
     super.key,
+    required this.layout,
     required this.score,
   });
 
+  final Layout layout;
   final int score;
 
   @override
@@ -21,7 +25,7 @@ class ScoreDisplay extends StatelessWidget {
 
           child: Text("Your score: $score",
               style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color: layout.playgroundTextColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 22)),
         ));
