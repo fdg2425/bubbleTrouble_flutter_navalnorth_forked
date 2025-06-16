@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'helper_classes/animation_provider.dart';
 import 'helper_widgets/fdg_logo_animation_widget.dart';
 import 'helper_widgets/title_animation_widget.dart';
 import 'settings/settings_provider.dart';
@@ -49,14 +50,7 @@ class _HomePageState extends State<HomePage>
   DateTime? dtLastMissileTimer;
 
   // for animation
-  // BTW: the code for the animation was taken from Gemini after asking 4 questions:
-  // a) Flutter rotate image animation
-  // b) Is this possible without AnimationBuilder by using _animation.value in a Matrix4
-  // c) how to run the animation only once started e.g. by a button press
-  // d) how to make animation not linear, but first fast and then slow
-
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late AnimationProvider _animationProvider;
 
   // for timer and build statistics
   var timerCounter = CycleCounter();
@@ -71,40 +65,15 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
-
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2), // Duration for one full rotation
-      vsync: this, // The TickerProvider
-    );
-
-    _animation = Tween<double>(
-      begin: 0.0,
-      end: 1, // One full circle
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic, // Or Curves.easeOut, Curves.decelerate, etc.
-    ));
-
-    // IMPORTANT: Add a listener to rebuild the widget on every animation tick
-    _animation.addListener(() {
-      setState(() {
-        // This will trigger a rebuild of the entire Matrix4RotationScreen
-        // whenever the _animation's value changes.
-      });
-    });
-
-    // Make the animation repeat indefinitely
-    //_controller.repeat();
-    _controller.forward();
+    _animationProvider = AnimationProvider(
+        duration: const Duration(seconds: 2), callback: refresh);
+    _animationProvider.startAnimation();
   }
 
   @override
   void dispose() {
     _focusNode.dispose();
-    _animation
-        .removeListener(() {}); // Remove the listener to prevent memory leaks
-    _controller.dispose(); // Important: Dispose the controller
-
+    _animationProvider.stopAnimation();
     super.dispose();
   }
 
@@ -113,8 +82,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void restartAnimation() {
-    _controller.reset();
-    _controller.forward();
+    _animationProvider.startAnimation();
   }
 
   // adapt layout according to screen size
@@ -367,17 +335,17 @@ class _HomePageState extends State<HomePage>
                       FdgLogoAnimationWidget(
                           finalTop: getFirstLineTop(),
                           finalLeft: playingAreaInset,
-                          animationValue: _animation.value,
+                          animationValue: _animationProvider.value,
                           playingAreaSize: playingAreaSize),
                       if (showTitle)
                         TitleAnimationWidget(
-                          animationValue: _animation.value,
+                          animationValue: _animationProvider.value,
                           callbackOnDoubleTap: restartAnimation,
                         ),
                       ShowSettingsButton(
                         finalTop: getFirstLineTop(),
                         finalRight: playingAreaInset,
-                        animationValue: _animation.value,
+                        animationValue: _animationProvider.value,
                         playingAreaSize: playingAreaSize,
                         settingsProvider: settingsProvider,
                       ),
