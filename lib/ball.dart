@@ -27,7 +27,7 @@ class Ball {
       diameter = 25 + 10 * random.nextDouble();
       speedY = 200 + 30 * random.nextDouble();
     }
-    print("bigballSelector = $bigBallSelector, diameter = $diameter");
+    //print("bigballSelector = $bigBallSelector, diameter = $diameter");
   }
 
   bool get isBigBall => diameter > 40;
