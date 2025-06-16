@@ -215,6 +215,10 @@ class _HomePageState extends State<HomePage>
       }
       for (var ball in ballsToBeRemoved) {
         balls.remove(ball);
+        if (ball.isBigBall) {
+          balls.add(ball.createSplitBall());
+          balls.add(ball.createSplitBall(switchDirection: true));
+        }
       }
       // if no more ball exists, start a new one
       if (balls.isEmpty) {
@@ -236,7 +240,10 @@ class _HomePageState extends State<HomePage>
       gameIsRunning = false;
     }
 
-    if (dtAddBall != null && DateTime.now().isAfter(dtAddBall!)) {
+    // is it time to add an additional ball and at the moment only one ball is in the game
+    if (dtAddBall != null &&
+        DateTime.now().isAfter(dtAddBall!) &&
+        balls.length <= 1) {
       var ball = Ball();
       ball.goToStartPosition(playingAreaSize);
       balls.add(ball);
@@ -382,7 +389,8 @@ class _HomePageState extends State<HomePage>
                       if (missile != null) missile!.getMissileWidget(),
                       player.getPlayerWidget(settingsProvider.layout),
                       // show the balls on top of the player to better see the collisions
-                      for (var ball in balls) ball.getBallWidget(),
+                      for (var ball in balls)
+                        ball.getBallWidget(settingsProvider.layout),
                       if (!gameIsRunning)
                         StartGameWidget(
                             callback: startGame, displayText: "Start game"),

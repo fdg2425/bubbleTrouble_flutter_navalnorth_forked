@@ -6,12 +6,16 @@ class Layout {
   Color? bottomRowBackgroundColor;
   Color? playerBackgroundColor;
   String? pathForPlayerIcon;
+  Color colorOfSmallBalls = Colors.orange;
+  bool showGradientColorInBalls = true;
 
   Layout.mitch() {
     playGroundBackgroundColor = Colors.pink[100];
     playgroundTextColor = Colors.grey.shade600;
     bottomRowBackgroundColor = Colors.grey;
     playerBackgroundColor = Colors.deepPurple;
+    colorOfSmallBalls = Colors.green;
+    showGradientColorInBalls = false;
   }
   Layout.irina() {
     playGroundBackgroundColor = Colors.blue[900];
