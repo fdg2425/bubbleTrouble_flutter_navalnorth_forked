@@ -192,8 +192,6 @@ class _HomePageState extends State<HomePage>
     }
 
     if (missile != null) {
-      missile!.increase(playingAreaSize.height);
-
       //checker si le missile touche la balle
       // While iterating through a list in Android, you should not remove elements from that list.
       // Otherwise you get an "ConcurrentModificationError" exception (this does not happen on Chrome ?!).
@@ -211,6 +209,7 @@ class _HomePageState extends State<HomePage>
 
       // if at least one ball was hit, "delete" the missile
       if (ballsToBeRemoved.isNotEmpty) {
+        missile?.stopTimer();
         missile = null;
       }
       for (var ball in ballsToBeRemoved) {
@@ -230,6 +229,7 @@ class _HomePageState extends State<HomePage>
       }
 
       if (missile != null && missile!.height > playingAreaSize.height) {
+        missile?.stopTimer();
         missile = null;
       }
     }
@@ -287,10 +287,18 @@ class _HomePageState extends State<HomePage>
   // fire_missile is only allowed while game is running,
   // because otherwise we have to timer "to move" the missile
   void fireMissile() {
-    if (gameIsRunning) {
-      missile = Missile();
-      missile!.alignToPlayer(player);
-    }
+    missile = Missile(
+      maxHeight: getPlayingAreaSize(context).height,
+      callbackWhenIncreased: (isLastCallbackCall) {
+        // when missile has reached the top, set missile here to null
+        if (isLastCallbackCall) {
+          missile = null;
+        }
+        refresh();
+      },
+    );
+    missile!.alignToPlayer(player);
+    missile!.startTimer();
   }
 
   // common callback for panUpdate used both for the playing area
@@ -409,7 +417,7 @@ class _HomePageState extends State<HomePage>
                 children: [
                   MyButton(
                       width: widthOfBottomButtons,
-                      isActive: gameIsRunning,
+                      //isActive: gameIsRunning,
                       icon: Icons.arrow_upward,
                       function: fireMissile),
                   Expanded(
