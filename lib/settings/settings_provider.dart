@@ -1,7 +1,18 @@
 import '../helper_classes/layout.dart';
+import '../main.dart';
 
 class SettingsProvider {
-  SettingsProvider({required this.callbackOnSettingsChange});
+  SettingsProvider({required this.callbackOnSettingsChange}) {
+    bool? test = globalPrefs.getBool("showButtons");
+    if (test != null) {
+      _showButtonsForPlayerMovement = test;
+    }
+
+    test = globalPrefs.getBool("showIrina");
+    if (test != null) {
+      _showIrinaLayout = test;
+    }
+  }
 
   final Function() callbackOnSettingsChange;
 
@@ -11,6 +22,7 @@ class SettingsProvider {
     //print("value is $value");
     if (value != _showButtonsForPlayerMovement) {
       _showButtonsForPlayerMovement = value;
+      globalPrefs.setBool("showButtons", value);
       callbackOnSettingsChange();
     }
   }
@@ -20,6 +32,7 @@ class SettingsProvider {
   set showIrinaLayout(bool value) {
     if (value != _showIrinaLayout) {
       _showIrinaLayout = value;
+      globalPrefs.setBool("showIrina", value);
       callbackOnSettingsChange();
     }
   }
